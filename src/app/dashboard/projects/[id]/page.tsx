@@ -19,6 +19,8 @@ export default function ProjectPage() {
     onSuccess: () => refetch(),
   });
 
+  const createDatabase = trpc.database.create.useMutation();
+
   const handleManualDeploy = async (serviceId: string) => {
     try {
       await triggerDeploy.mutateAsync({ serviceId, commitMessage: "Manual deployment via UI" });
@@ -175,15 +177,37 @@ export default function ProjectPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {defaultEnv.databases?.map(db => (
-                <div key={db.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
-                  <span>🗄️ {db.name}</span>
+                <div key={db.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", padding: "8px", background: "var(--bg-overlay)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>{db.provider === "POSTGRES" ? "🐘" : "🔴"}</span>
+                    <strong>{db.name}</strong>
+                  </div>
                   <span className="badge badge-active">Ready</span>
                 </div>
               ))}
             </div>
           )}
-          <button className="btn btn-ghost btn-sm" style={{ marginTop: "16px", paddingLeft: 0 }}>
-            ＋ Attach Database
+          
+          <button 
+            className="btn btn-ghost btn-sm" 
+            style={{ marginTop: "16px", paddingLeft: 0 }}
+            onClick={async () => {
+              const name = prompt("Enter database name (e.g., main-db):");
+              if (!name) return;
+              try {
+                await createDatabase.mutateAsync({
+                  environmentId: defaultEnv.id,
+                  name: name,
+                  provider: "POSTGRES",
+                  region: "us-east-1"
+                });
+                refetch();
+              } catch (e: any) {
+                alert(`Failed to create DB: ${e.message}`);
+              }
+            }}
+          >
+            ＋ Attach Postgres DB
           </button>
         </div>
         <div className="card">

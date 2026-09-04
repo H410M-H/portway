@@ -4,6 +4,7 @@ import { projectRouter } from "@/server/routers/project";
 import { serviceRouter } from "@/server/routers/service";
 import { deploymentRouter } from "@/server/routers/deployment";
 import { githubRouter } from "@/server/routers/github";
+import { databaseRouter } from "@/server/routers/database";
 
 /**
  * Root tRPC router — all sub-routers are merged here.
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   service: serviceRouter,
   deployment: deploymentRouter,
   github: githubRouter,
+  database: databaseRouter,
 });
 
 export type AppRouter = typeof appRouter;

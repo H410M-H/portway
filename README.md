@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portway — Cloud Application Platform
+
+> A Railway-class PaaS built on Next.js 15, tRPC, Prisma, and Cloudflare Containers.
+> PRD v0.1 | MSNS-DEV™ | September 2026
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Control Plane** | Next.js 16 App Router · TypeScript strict |
+| **API** | tRPC v11 · React Query v5 · superjson |
+| **Auth** | NextAuth.js v5 · GitHub OAuth · email/password |
+| **ORM / DB** | Prisma · PostgreSQL |
+| **Data Plane** | Cloudflare Containers (Phase 1+) |
+| **Billing** | Stripe (Phase 2) |
+| **Email** | Resend |
+| **Hosting** | Vercel Pro (control plane) · Cloudflare (edge + data plane) |
+
+## Project Structure
+
+```
+portway/
+├── prisma/
+│   └── schema.prisma          ← Full control-plane schema (§6 of PRD)
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── trpc/[trpc]/   ← tRPC fetch handler
+│   │   │   └── auth/[...]/    ← NextAuth route
+│   │   ├── auth/signin/       ← Sign-in page
+│   │   └── dashboard/         ← Protected dashboard shell
+│   ├── server/
+│   │   ├── trpc.ts            ← tRPC init, context, middleware
+│   │   ├── root.ts            ← Root router
+│   │   └── routers/
+│   │       ├── workspace.ts
+│   │       ├── project.ts
+│   │       ├── service.ts
+│   │       └── deployment.ts
+│   └── lib/
+│       ├── db.ts              ← Prisma singleton
+│       └── auth.ts            ← NextAuth config
+└── .env.example               ← All required env vars documented
+```
 
 ## Getting Started
 
-First, run the development server:
-
+### 1. Install dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure environment
+```bash
+cp .env.example .env.local
+# Fill in DATABASE_URL, NEXTAUTH_SECRET, GITHUB_CLIENT_ID/SECRET
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Generate a secret
+```bash
+openssl rand -base64 32  # paste as NEXTAUTH_SECRET
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Run database migrations
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
 
-## Learn More
+### 5. Start dev server
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Phase Roadmap
 
-## Deploy on Vercel
+| Phase | Theme | Status |
+|---|---|---|
+| **Phase 0** | Control-plane skeleton (auth, schema, tRPC, UI shell) | ✅ Complete |
+| **Phase 1** | MVP Deploy Loop (GitHub → build → deploy → domain → logs) | 🔜 Next |
+| **Phase 2** | Team & Confidence (custom domains, metrics, billing) | Planned |
+| **Phase 3** | Platform Depth (private net, volumes, feature flags) | Planned |
+| **Phase 4** | Ecosystem (CLI, public API, AI agent, templates) | Planned |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+See [`Portway365.md`](../storage/shared/Portway365.md) for the full PRD.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+*Portway PRD v0.1 · MSNS-DEV™ · September 2026 · DRAFT*

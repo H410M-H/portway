@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { TRPCProvider } from "@/lib/trpc-client";
 
 export const metadata: Metadata = {
   title: { default: "Portway", template: "%s — Portway" },
@@ -25,7 +26,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <TRPCProvider>{children}</TRPCProvider>
+      </body>
     </html>
   );
 }

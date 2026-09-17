@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/trpc";
 import { TRPCError } from "@trpc/server";
+import { domainService } from "@/lib/domain-service";
 
 export const serviceRouter = createTRPCRouter({
   /** List services in an environment */
@@ -20,6 +21,8 @@ export const serviceRouter = createTRPCRouter({
         },
         include: {
           domains: true,
+          variables: true,
+          volumes: true,
           deployments: {
             orderBy: { createdAt: "desc" },
             take: 1,
@@ -29,7 +32,42 @@ export const serviceRouter = createTRPCRouter({
       });
     }),
 
-  /** Create a service — FR-SVC-01 */
+  /** Get a single service by ID with full relations */
+  byId: protectedProcedure
+    .input(z.object({ serviceId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const service = await ctx.db.service.findFirst({
+        where: {
+          id: input.serviceId,
+          deletedAt: null,
+          environment: {
+            project: {
+              deletedAt: null,
+              workspace: { members: { some: { userId: ctx.session.user.id } } },
+            },
+          },
+        },
+        include: {
+          environment: { include: { project: true } },
+          domains: true,
+          variables: true,
+          volumes: true,
+          deployments: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
+          builds: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
+        },
+      });
+
+      if (!service) throw new TRPCError({ code: "NOT_FOUND", message: "Service not found" });
+      return service;
+    }),
+
+  /** Create a service and auto-generate default domain — FR-SVC-01 */
   create: protectedProcedure
     .input(
       z.object({
@@ -41,6 +79,8 @@ export const serviceRouter = createTRPCRouter({
         rootDir: z.string().optional(),
         dockerImage: z.string().optional(),
         port: z.number().int().min(1).max(65535).optional(),
+        buildCommand: z.string().optional(),
+        startCommand: z.string().optional(),
         instanceType: z
           .enum(["lite", "standard-1", "standard-2", "standard-4"])
           .default("lite"),
@@ -59,10 +99,11 @@ export const serviceRouter = createTRPCRouter({
             },
           },
         },
+        include: { project: true },
       });
-      if (!env) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!env) throw new TRPCError({ code: "NOT_FOUND", message: "Environment not found" });
 
-      return ctx.db.service.create({
+      const service = await ctx.db.service.create({
         data: {
           environmentId: input.environmentId,
           name: input.name,
@@ -72,8 +113,78 @@ export const serviceRouter = createTRPCRouter({
           rootDir: input.rootDir,
           dockerImage: input.dockerImage,
           port: input.port,
+          buildCommand: input.buildCommand,
+          startCommand: input.startCommand,
           instanceType: input.instanceType,
           scaleToZero: input.scaleToZero,
+        },
+      });
+
+      // Automatically generate default domain <service>-<env>.portway.app
+      const defaultHostname = domainService.generateDefaultSubdomain(service.name, env.name);
+      const existingDomain = await ctx.db.domain.findUnique({
+        where: { hostname: defaultHostname },
+      });
+
+      const finalHostname = existingDomain
+        ? domainService.generateDefaultSubdomain(service.name, env.name, service.id.slice(-4).toLowerCase())
+        : defaultHostname;
+
+      await ctx.db.domain.create({
+        data: {
+          serviceId: service.id,
+          hostname: finalHostname,
+          isGenerated: true,
+          status: "ACTIVE",
+          verifiedAt: new Date(),
+        },
+      });
+
+      return service;
+    }),
+
+  /** Update service configuration */
+  update: protectedProcedure
+    .input(
+      z.object({
+        serviceId: z.string(),
+        name: z.string().min(1).max(64).optional(),
+        buildCommand: z.string().optional().nullable(),
+        startCommand: z.string().optional().nullable(),
+        rootDir: z.string().optional().nullable(),
+        dockerImage: z.string().optional().nullable(),
+        port: z.number().int().min(1).max(65535).optional().nullable(),
+        instanceType: z.string().optional(),
+        scaleToZero: z.boolean().optional(),
+        idleTimeoutSecs: z.number().int().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const service = await ctx.db.service.findFirst({
+        where: {
+          id: input.serviceId,
+          deletedAt: null,
+          environment: {
+            project: {
+              workspace: { members: { some: { userId: ctx.session.user.id } } },
+            },
+          },
+        },
+      });
+      if (!service) throw new TRPCError({ code: "NOT_FOUND" });
+
+      return ctx.db.service.update({
+        where: { id: input.serviceId },
+        data: {
+          ...(input.name !== undefined && { name: input.name }),
+          ...(input.buildCommand !== undefined && { buildCommand: input.buildCommand }),
+          ...(input.startCommand !== undefined && { startCommand: input.startCommand }),
+          ...(input.rootDir !== undefined && { rootDir: input.rootDir }),
+          ...(input.dockerImage !== undefined && { dockerImage: input.dockerImage }),
+          ...(input.port !== undefined && { port: input.port }),
+          ...(input.instanceType !== undefined && { instanceType: input.instanceType }),
+          ...(input.scaleToZero !== undefined && { scaleToZero: input.scaleToZero }),
+          ...(input.idleTimeoutSecs !== undefined && { idleTimeoutSecs: input.idleTimeoutSecs }),
         },
       });
     }),
@@ -101,7 +212,7 @@ export const serviceRouter = createTRPCRouter({
       });
     }),
 
-  /** Update environment variables for a service — FR-VAR-01 */
+  /** Update or insert environment variables for a service — FR-VAR-01 */
   setVariable: protectedProcedure
     .input(
       z.object({
@@ -112,21 +223,82 @@ export const serviceRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // DR-03: in production, encrypt value before upsert
-      // For Phase 0 skeleton this is a direct upsert; encryption middleware added in Phase 1
-      return ctx.db.environmentVariable.upsert({
+      const service = await ctx.db.service.findFirst({
         where: {
-          // upsert by serviceId + key is handled via findFirst + create/update
-          id: "placeholder", // will not match — see below
-        },
-        update: { value: input.value },
-        create: {
-          serviceId: input.serviceId,
-          key: input.key,
-          value: input.value,
-          isSecret: input.isSecret,
+          id: input.serviceId,
+          deletedAt: null,
+          environment: {
+            project: {
+              workspace: { members: { some: { userId: ctx.session.user.id } } },
+            },
+          },
         },
       });
+      if (!service) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Locate existing variable by serviceId + key
+      const existing = await ctx.db.environmentVariable.findFirst({
+        where: {
+          serviceId: input.serviceId,
+          key: input.key,
+        },
+      });
+
+      if (existing) {
+        return ctx.db.environmentVariable.update({
+          where: { id: existing.id },
+          data: {
+            value: input.value,
+            isSecret: input.isSecret,
+            isReference: input.value.includes("${{"),
+          },
+        });
+      } else {
+        return ctx.db.environmentVariable.create({
+          data: {
+            serviceId: input.serviceId,
+            key: input.key,
+            value: input.value,
+            isSecret: input.isSecret,
+            isReference: input.value.includes("${{"),
+          },
+        });
+      }
+    }),
+
+  /** Delete an environment variable */
+  deleteVariable: protectedProcedure
+    .input(z.object({ variableId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const variable = await ctx.db.environmentVariable.findUnique({
+        where: { id: input.variableId },
+        include: {
+          service: {
+            include: {
+              environment: {
+                include: { project: { include: { workspace: true } } },
+              },
+            },
+          },
+        },
+      });
+      if (!variable || !variable.service) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const member = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: variable.service.environment.project.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+      if (!member) throw new TRPCError({ code: "FORBIDDEN" });
+
+      await ctx.db.environmentVariable.delete({
+        where: { id: input.variableId },
+      });
+
+      return { success: true };
     }),
 
   /** Soft-delete a service — FR-SVC-08 */

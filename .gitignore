@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent internal workspace
+.agents/
+
+# graphify cache
+graphify-out/cache/

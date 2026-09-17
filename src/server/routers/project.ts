@@ -14,7 +14,30 @@ async function assertProjectAccess(
       deletedAt: null,
       workspace: { members: { some: { userId } } },
     },
-    include: { workspace: { include: { members: true } } },
+    include: {
+      workspace: { include: { members: true } },
+      buckets: true,
+      environments: {
+        include: {
+          services: {
+            where: { deletedAt: null },
+            include: {
+              deployments: {
+                orderBy: { createdAt: "desc" },
+                take: 10,
+                include: {
+                  build: true,
+                },
+              },
+              domains: true,
+              variables: true,
+              volumes: true,
+            },
+          },
+          databases: true,
+        },
+      },
+    },
   });
   if (!project) throw new TRPCError({ code: "NOT_FOUND" });
   return project;

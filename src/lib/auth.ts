@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, getServerSession } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -59,9 +59,9 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user, account }) {
-      // Auto-create personal workspace on first GitHub sign-in — FR-AUTH-04
-      if (account?.provider === "github" && user.id) {
+    async signIn({ user }) {
+      // Auto-create personal workspace on first sign-in — FR-AUTH-04
+      if (user.id) {
         const existing = await db.workspace.findFirst({
           where: {
             members: { some: { userId: user.id } },
@@ -113,3 +113,5 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+export const auth = () => getServerSession(authOptions);
+

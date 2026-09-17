@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { db } from "@/lib/db";
+import { executeDeployment } from "@/lib/orchestrator/engine";
+import { handlePullRequestWebhook } from "@/lib/orchestrator/pr-manager";
 
 // You will need to add GITHUB_WEBHOOK_SECRET to your .env.local
 const WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
@@ -83,16 +85,25 @@ export async function POST(req: Request) {
         },
       });
 
-      // TODO: Here we would push { buildId: build.id } to our Job Queue (e.g., Upstash QStash, or call another worker API).
-      // For now, it's enqueued in the DB.
-      
+      // Execute asynchronously via dual-driver orchestrator
+      executeDeployment(deployment.id, build.id, service.id, {
+        serviceId: service.id,
+        commitSha,
+        commitMessage,
+      }).catch((e) => console.error("Webhook deployment error:", e));
+
       results.push({ serviceId: service.id, buildId: build.id, deploymentId: deployment.id });
     }
 
-    return NextResponse.json({ message: "Push received, builds queued", data: results }, { status: 202 });
+    return NextResponse.json({ message: "Push received, builds triggered", data: results }, { status: 202 });
   }
 
-  // Handle other events (e.g. ping, pull_request)
+  // Handle pull_request event for ephemeral preview environments (F20)
+  if (eventName === "pull_request") {
+    const result = await handlePullRequestWebhook(payload);
+    return NextResponse.json({ message: "Pull request processed", data: result }, { status: 200 });
+  }
+
   if (eventName === "ping") {
     return NextResponse.json({ message: "pong" }, { status: 200 });
   }

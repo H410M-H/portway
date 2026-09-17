@@ -1,8 +1,47 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/trpc";
 import { TRPCError } from "@trpc/server";
+import { executeDeployment } from "@/lib/orchestrator/engine";
+import { logEventBus } from "@/lib/telemetry/event-bus";
 
 export const deploymentRouter = createTRPCRouter({
+  /** Get single deployment by id */
+  byId: protectedProcedure
+    .input(z.object({ deploymentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const deployment = await ctx.db.deployment.findFirst({
+        where: {
+          id: input.deploymentId,
+          service: {
+            environment: {
+              project: {
+                workspace: {
+                  members: { some: { userId: ctx.session.user.id } },
+                },
+              },
+            },
+          },
+        },
+        include: {
+          build: true,
+          service: {
+            include: {
+              environment: true,
+            },
+          },
+        },
+      });
+      if (!deployment) throw new TRPCError({ code: "NOT_FOUND" });
+      return deployment;
+    }),
+
+  /** Get live or historical log lines for a deployment */
+  logs: protectedProcedure
+    .input(z.object({ deploymentId: z.string() }))
+    .query(async ({ input }) => {
+      return logEventBus.getHistory(input.deploymentId);
+    }),
+
   /** Get deployment history for a service */
   list: protectedProcedure
     .input(
@@ -52,8 +91,6 @@ export const deploymentRouter = createTRPCRouter({
 
   /**
    * Trigger a manual deployment — FR-DEP-01, FR-SVC-05
-   * Phase 0: creates the DB records and queues the job.
-   * Phase 1: orchestrator picks up the job and calls Cloudflare Containers API.
    */
   trigger: protectedProcedure
     .input(
@@ -89,14 +126,14 @@ export const deploymentRouter = createTRPCRouter({
       const build = await ctx.db.build.create({
         data: {
           serviceId: input.serviceId,
-          commitSha: input.commitSha,
-          commitMessage: input.commitMessage,
+          commitSha: input.commitSha || Math.random().toString(16).slice(2, 9),
+          commitMessage: input.commitMessage || "Manual deployment via console",
           triggeredBy: ctx.session.user.id,
           status: "QUEUED",
         },
       });
 
-      // Create Deployment record — status will be updated by the orchestrator
+      // Create Deployment record
       const deployment = await ctx.db.deployment.create({
         data: {
           serviceId: input.serviceId,
@@ -106,8 +143,15 @@ export const deploymentRouter = createTRPCRouter({
         },
       });
 
-      // TODO Phase 1: enqueue job to orchestrator → Cloudflare Containers API
-      // await queue.enqueue("build-and-deploy", { buildId: build.id, deploymentId: deployment.id })
+      // Execute asynchronously via dual-driver orchestrator
+      executeDeployment(deployment.id, build.id, service.id, {
+        serviceId: service.id,
+        commitSha: build.commitSha || undefined,
+        commitMessage: build.commitMessage || undefined,
+        userId: ctx.session.user.id,
+      }).catch((err) => {
+        console.error("Deployment execution error:", err);
+      });
 
       return { build, deployment };
     }),
@@ -119,7 +163,6 @@ export const deploymentRouter = createTRPCRouter({
       const prev = await ctx.db.deployment.findFirst({
         where: {
           id: input.deploymentId,
-          status: "ACTIVE",
           service: {
             environment: {
               project: {
@@ -135,7 +178,7 @@ export const deploymentRouter = createTRPCRouter({
             },
           },
         },
-        include: { build: true },
+        include: { build: true, service: true },
       });
       if (!prev) throw new TRPCError({ code: "NOT_FOUND" });
 
@@ -149,6 +192,48 @@ export const deploymentRouter = createTRPCRouter({
         },
       });
 
+      executeDeployment(deployment.id, prev.buildId, prev.serviceId, {
+        serviceId: prev.serviceId,
+        commitSha: prev.build?.commitSha || undefined,
+        commitMessage: `Rollback to deployment ${prev.id.slice(0, 8)}`,
+        userId: ctx.session.user.id,
+      }).catch((err) => {
+        console.error("Redeploy error:", err);
+      });
+
       return deployment;
     }),
+
+  /** Cancel a running/queued deployment */
+  cancel: protectedProcedure
+    .input(z.object({ deploymentId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const deployment = await ctx.db.deployment.findFirst({
+        where: {
+          id: input.deploymentId,
+          status: { in: ["QUEUED", "BUILDING", "DEPLOYING"] },
+          service: {
+            environment: {
+              project: {
+                workspace: {
+                  members: {
+                    some: {
+                      userId: ctx.session.user.id,
+                      role: { in: ["OWNER", "MEMBER"] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!deployment) throw new TRPCError({ code: "NOT_FOUND" });
+
+      return ctx.db.deployment.update({
+        where: { id: input.deploymentId },
+        data: { status: "CANCELLED" },
+      });
+    }),
 });
+

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/trpc";
 import { TRPCError } from "@trpc/server";
+import { WorkspaceRole } from "@prisma/client";
 
 export const workspaceRouter = createTRPCRouter({
   /** List all workspaces the current user belongs to */
@@ -146,5 +147,232 @@ export const workspaceRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
         take: input.limit,
       });
+    }),
+
+  /** Update workspace spending cap — owners only (FR-WRK-05) */
+  updateSpendingCap: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        spendingCapCents: z.number().int().min(0).nullable(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const membership = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: input.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+      if (!membership || membership.role !== "OWNER") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only workspace owners can modify spending caps" });
+      }
+
+      const updated = await ctx.db.workspace.update({
+        where: { id: input.workspaceId },
+        data: { spendingCapCents: input.spendingCapCents },
+      });
+
+      await ctx.db.auditLogEntry.create({
+        data: {
+          workspaceId: input.workspaceId,
+          actorUserId: ctx.session.user.id,
+          action: "workspace.spending_cap_updated",
+          metadata: { spendingCapCents: input.spendingCapCents },
+        },
+      });
+
+      return updated;
+    }),
+
+  /** Update a member's role — owners only */
+  updateMemberRole: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        userId: z.string(),
+        role: z.nativeEnum(WorkspaceRole),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const callerMembership = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: input.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+      if (!callerMembership || callerMembership.role !== "OWNER") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return ctx.db.workspaceMember.update({
+        where: {
+          workspaceId_userId: {
+            workspaceId: input.workspaceId,
+            userId: input.userId,
+          },
+        },
+        data: { role: input.role },
+      });
+    }),
+
+  /** Remove a member from workspace — owners only */
+  removeMember: protectedProcedure
+    .input(
+      z.object({
+        workspaceId: z.string(),
+        userId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const callerMembership = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: input.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+      if (!callerMembership || callerMembership.role !== "OWNER") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      if (input.userId === ctx.session.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot remove yourself from workspace" });
+      }
+
+      return ctx.db.workspaceMember.delete({
+        where: {
+          workspaceId_userId: {
+            workspaceId: input.workspaceId,
+            userId: input.userId,
+          },
+        },
+      });
+    }),
+
+  /** List pending invites for a workspace */
+  listInvites: protectedProcedure
+    .input(z.object({ workspaceId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const member = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: input.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+      if (!member) throw new TRPCError({ code: "FORBIDDEN" });
+
+      return ctx.db.workspaceInvite.findMany({
+        where: {
+          workspaceId: input.workspaceId,
+          acceptedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
+  /** Revoke an invite */
+  revokeInvite: protectedProcedure
+    .input(z.object({ inviteId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const invite = await ctx.db.workspaceInvite.findUnique({
+        where: { id: input.inviteId },
+      });
+      if (!invite) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const member = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: invite.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+      if (!member || member.role !== "OWNER") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      return ctx.db.workspaceInvite.delete({
+        where: { id: input.inviteId },
+      });
+    }),
+
+  /** Get invite details by token (public/protected) */
+  getInvite: protectedProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const invite = await ctx.db.workspaceInvite.findUnique({
+        where: { token: input.token },
+        include: { workspace: true },
+      });
+      if (!invite) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Invitation not found" });
+      }
+      return {
+        id: invite.id,
+        email: invite.email,
+        role: invite.role,
+        workspaceName: invite.workspace.name,
+        workspaceSlug: invite.workspace.slug,
+        isExpired: invite.expiresAt < new Date(),
+        isAccepted: !!invite.acceptedAt,
+      };
+    }),
+
+  /** Accept an invite by token */
+  acceptInvite: protectedProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const invite = await ctx.db.workspaceInvite.findUnique({
+        where: { token: input.token },
+        include: { workspace: true },
+      });
+      if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid, expired, or already accepted" });
+      }
+
+      // Add user to workspace if not already member
+      const existing = await ctx.db.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            workspaceId: invite.workspaceId,
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+
+      if (!existing) {
+        await ctx.db.workspaceMember.create({
+          data: {
+            workspaceId: invite.workspaceId,
+            userId: ctx.session.user.id,
+            role: invite.role,
+          },
+        });
+      }
+
+      await ctx.db.workspaceInvite.update({
+        where: { id: invite.id },
+        data: { acceptedAt: new Date() },
+      });
+
+      await ctx.db.auditLogEntry.create({
+        data: {
+          workspaceId: invite.workspaceId,
+          actorUserId: ctx.session.user.id,
+          action: "member.accepted_invite",
+          metadata: { role: invite.role },
+        },
+      });
+
+      return { workspaceSlug: invite.workspace.slug };
     }),
 });

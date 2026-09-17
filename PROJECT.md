@@ -58,10 +58,13 @@ Portway is a high-performance, developer-centric Platform-as-a-Service (PaaS) bu
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Backend Engines, Data Layer & API Routers | Buildpack engine (F6, F7, F8), Database/Bucket/Domain/Volume services & tRPC routers (F14, F15, F16, F17, F18), bug fixes in service.ts & database-provider.ts | none | PLANNED |
-| M2 | Deployment Orchestrator, Dual-Driver, Logs/Metrics & GitHub | Deployment state machine & Dual-Driver (F9, F10, F11), SSE Log & Metrics streams (F12, F13), GitHub webhooks & PR preview manager (F19, F20) | M1 | PLANNED |
-| M3 | Complete Dashboard UI & Page Hierarchy (Zero 404s) | Dynamic workspace view (F1), 7-tab project console (F2), global settings (F3), resource creation flows (F4), navigation zero-404 routes & switcher (F5) | M1, M2 | PLANNED |
-| M4 | Final Milestone: 100% E2E Test Pass & Coverage Hardening | Phase 1: Pass 100% of E2E test suite (Tiers 1-4). Phase 2: Adversarial coverage hardening (Tier 5). Type-check (`npx tsc --noEmit`) and production build (`npm run build`) | M1, M2, M3 | PLANNED |
+| M1 | Backend Engines, Data Layer & API Routers | Buildpack engine (F6, F7, F8), Database/Bucket/Domain/Volume services & tRPC routers (F14, F15, F16, F17, F18), bug fixes in service.ts & database-provider.ts | none | COMPLETED ✔ |
+| M2 | Deployment Orchestrator, Dual-Driver, Logs/Metrics & GitHub | Deployment state machine & Dual-Driver (F9, F10, F11), SSE Log & Metrics streams (F12, F13), GitHub webhooks & PR preview manager (F19, F20) | M1 | COMPLETED ✔ |
+| M3 | Complete Dashboard UI & Page Hierarchy (Zero 404s) | Dynamic workspace view (F1), 7-tab project console (F2), global settings (F3), resource creation flows (F4), navigation zero-404 routes & switcher (F5) | M1, M2 | COMPLETED ✔ |
+| M4 | Final Milestone: 100% E2E Test Pass & Coverage Hardening | Phase 1: Pass 100% of E2E test suite (Tiers 1-4, 222/222 passing). Phase 2: Adversarial coverage hardening. Type-check (`npx tsc --noEmit` = 0) and production build (`npm run build` = 17/17 routes) | M1, M2, M3 | COMPLETED ✔ |
+| M5 | Multi-Region Edge Networking & Cloud Container Proxy | Production Cloudflare Containers driver, edge TLS termination, multi-region routing & failover | M1-M4 | NEXT UP |
+| M6 | Portway Developer CLI (`pw`) & Public OpenAPI Platform | Standalone Go/Node CLI, `portway.json` schema, GitHub Actions deploy step, API token authentication | M1-M4 | PLANNED |
+| M7 | Interactive Web Shell & Database Query Studio | XTerm.js VT100 web terminal connecting to container stdin/stdout, embedded SQL query runner | M1-M4 | PLANNED |
 
 ## Interface Contracts
 

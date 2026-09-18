@@ -106,6 +106,48 @@ const SAMPLE_SCHEMAS: Record<string, TableSchema[]> = {
 };
 
 /**
+ * Detects destructive SQL operations across all statements in a query string
+ */
+export function detectDestructiveSql(rawSql: string): { isDestructive: boolean; reason?: string } {
+  // Strip comments
+  const stripped = rawSql
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/--.*$/gm, " ");
+
+  // Split into individual statements
+  const statements = stripped
+    .split(";")
+    .map((s) => s.trim().replace(/\s+/g, " "))
+    .filter((s) => s.length > 0);
+
+  for (const stmt of statements) {
+    const upper = stmt.toUpperCase();
+
+    // Check DROP (TABLE, DATABASE, SCHEMA, VIEW)
+    if (/\bDROP\s+(TABLE|DATABASE|SCHEMA|VIEW)\b/.test(upper)) {
+      return { isDestructive: true, reason: `DROP command detected: "${stmt.slice(0, 40)}"` };
+    }
+
+    // Check TRUNCATE
+    if (/\bTRUNCATE(\s+TABLE)?\b/.test(upper)) {
+      return { isDestructive: true, reason: `TRUNCATE command detected: "${stmt.slice(0, 40)}"` };
+    }
+
+    // Check DELETE without WHERE
+    if (/\bDELETE\s+FROM\b/.test(upper) && !/\bWHERE\b/.test(upper)) {
+      return { isDestructive: true, reason: `DELETE without WHERE clause detected: "${stmt.slice(0, 40)}"` };
+    }
+
+    // Check ALTER TABLE ... DROP
+    if (/\bALTER\s+TABLE\b/.test(upper) && /\bDROP\b/.test(upper)) {
+      return { isDestructive: true, reason: `ALTER TABLE ... DROP detected: "${stmt.slice(0, 40)}"` };
+    }
+  }
+
+  return { isDestructive: false };
+}
+
+/**
  * Executes a query with safety verification and metrics tracking
  */
 export async function executeQuery(
@@ -205,12 +247,11 @@ export async function executeQuery(
 
   // SQL Command Handling
   const upper = trimmed.toUpperCase();
-  const isDrop = upper.includes("DROP DATABASE") || upper.includes("DROP TABLE");
-  const isDeleteNoWhere = upper.startsWith("DELETE FROM") && !upper.includes("WHERE");
+  const { isDestructive, reason: destructiveReason } = detectDestructiveSql(trimmed);
 
-  if (safeMode && (isDrop || isDeleteNoWhere)) {
+  if (safeMode && isDestructive) {
     throw new Error(
-      `Safe Mode Block: Destructive query rejected (${isDrop ? "DROP TABLE/DATABASE" : "DELETE without WHERE"}). Disable Safe Mode to execute.`
+      `Safe Mode Block: Destructive query rejected (${destructiveReason}). Disable Safe Mode to execute.`
     );
   }
 
@@ -292,14 +333,14 @@ export async function executeQuery(
     };
   }
 
-  if (upper.startsWith("INSERT") || upper.startsWith("UPDATE") || upper.startsWith("DELETE")) {
+  if (upper.startsWith("INSERT") || upper.startsWith("UPDATE") || upper.startsWith("DELETE") || upper.startsWith("TRUNCATE") || upper.startsWith("DROP")) {
     return {
       columns: [{ name: "rows_affected", type: "integer" }],
       rows: [{ rows_affected: 1 }],
       rowCount: 1,
       durationMs,
       commandType: upper.split(" ")[0],
-      isDestructive: isDrop || isDeleteNoWhere,
+      isDestructive,
     };
   }
 

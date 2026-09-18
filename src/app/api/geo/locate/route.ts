@@ -39,14 +39,17 @@ export async function GET(req: NextRequest) {
       ? { lat: latitude, lon: longitude }
       : getCoordinatesForCountry(country);
 
-  const allRegions = getEdgeRegions().map((reg) => ({
-    id: reg.id,
-    name: reg.name,
-    location: reg.location,
-    status: reg.status,
-    distanceKm: calculateDistanceKm(coords.lat, coords.lon, reg.latitude, reg.longitude),
-    latencyMs: Math.max(8, Math.round(reg.averageLatencyMs + (calculateDistanceKm(coords.lat, coords.lon, reg.latitude, reg.longitude) / 1000) * 4.8)),
-  }));
+  const allRegions = getEdgeRegions().map((reg) => {
+    const dist = calculateDistanceKm(coords.lat, coords.lon, reg.latitude, reg.longitude);
+    return {
+      id: reg.id,
+      name: reg.name,
+      location: reg.location,
+      status: reg.status,
+      distanceKm: dist,
+      latencyMs: Math.max(8, Math.round(reg.averageLatencyMs + (dist / 1000) * 4.8)),
+    };
+  });
 
   return NextResponse.json({
     status: "ok",

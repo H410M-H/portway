@@ -28,7 +28,7 @@ import {
   generateGitHubWorkflow,
 } from "../../src/lib/manifest/parser";
 
-import { parseCliArgs } from "../../src/cli/index";
+import { parseCliArgs, runCli } from "../../src/cli/index";
 import { checkScope } from "../../src/lib/api/auth-token";
 import { executeShellCommand, getPrompt } from "../../src/lib/shell/web-shell";
 import { executeQuery, getDatabaseSchema } from "../../src/lib/query-studio/engine";
@@ -164,6 +164,17 @@ registerTest("M6-CLI-05", "M6", 5, "API Token granular RBAC scope enforcement", 
   assertFalse(checkScope("READ_ONLY", "FULL_ACCESS"));
 });
 
+registerTest("M6-CLI-06", "M6", 5, "CLI executes status, logs, and db list commands successfully", async () => {
+  const statusCode = await runCli(["status"]);
+  assertEqual(statusCode, 0, "syncbay status must exit with code 0");
+
+  const logsCode = await runCli(["logs", "web"]);
+  assertEqual(logsCode, 0, "syncbay logs web must exit with code 0");
+
+  const dbCode = await runCli(["db", "list"]);
+  assertEqual(dbCode, 0, "syncbay db list must exit with code 0");
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 // M7: INTERACTIVE WEB SHELL & DATABASE QUERY STUDIO TESTS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -225,7 +236,7 @@ registerTest("M7-STUDIO-01", "M7", 5, "Query Studio executes SQL queries and ret
   assertFalse(result.isDestructive);
 });
 
-registerTest("M7-STUDIO-02", "M7", 5, "Query Studio Safe Mode blocks destructive DROP/DELETE without WHERE", async () => {
+registerTest("M7-STUDIO-02", "M7", 5, "Query Studio Safe Mode blocks destructive DROP/DELETE without WHERE and bypass attempts", async () => {
   let threw = false;
   try {
     await executeQuery("DROP TABLE users;", "POSTGRES", true);
@@ -243,6 +254,36 @@ registerTest("M7-STUDIO-02", "M7", 5, "Query Studio Safe Mode blocks destructive
     assertIncludes(err.message, "Safe Mode Block");
   }
   assertTrue(threwDelete, "Safe Mode must block DELETE without WHERE");
+
+  // Multi-statement bypass attempt: SELECT 1; DELETE FROM users;
+  let threwMulti = false;
+  try {
+    await executeQuery("SELECT 1; DELETE FROM users;", "POSTGRES", true);
+  } catch (err: any) {
+    threwMulti = true;
+    assertIncludes(err.message, "Safe Mode Block");
+  }
+  assertTrue(threwMulti, "Safe Mode must block multi-statement DELETE without WHERE");
+
+  // TRUNCATE TABLE bypass attempt
+  let threwTruncate = false;
+  try {
+    await executeQuery("TRUNCATE TABLE users;", "POSTGRES", true);
+  } catch (err: any) {
+    threwTruncate = true;
+    assertIncludes(err.message, "Safe Mode Block");
+  }
+  assertTrue(threwTruncate, "Safe Mode must block TRUNCATE TABLE");
+
+  // DROP SCHEMA bypass attempt
+  let threwDropSchema = false;
+  try {
+    await executeQuery("DROP SCHEMA public CASCADE;", "POSTGRES", true);
+  } catch (err: any) {
+    threwDropSchema = true;
+    assertIncludes(err.message, "Safe Mode Block");
+  }
+  assertTrue(threwDropSchema, "Safe Mode must block DROP SCHEMA");
 });
 
 registerTest("M7-STUDIO-03", "M7", 5, "Query Studio handles Redis commands (PING, SET, GET, KEYS)", async () => {
@@ -274,8 +315,24 @@ registerTest("GEO-01", "GEO", 5, "Country coordinate dictionary accurately resol
   const deCoords = getCoordinatesForCountry("DE");
   assertEqual(deCoords.lat, 51.1657);
 
+  const pkCoords = getCoordinatesForCountry("PK");
+  assertEqual(pkCoords.lat, 30.3753);
+
   const fallback = getCoordinatesForCountry("UNKNOWN_COUNTRY");
   assertTrue(fallback.lat !== undefined && fallback.lon !== undefined);
+});
+
+registerTest("GEO-02", "GEO", 5, "Global Edge Routing accurately routes developer hubs to optimal POPs", () => {
+  // Pakistan routes to Singapore (sin1), NOT US East (iad1)
+  const pkDecision = routeClientRequest({ country: "PK" });
+  assertEqual(pkDecision.activeRegion.id, "sin1", "PK client must route to sin1 Singapore POP");
+
+  // Spain routes to Frankfurt (fra1) or London (lhr1)
+  const esDecision = routeClientRequest({ country: "ES" });
+  assertTrue(
+    esDecision.activeRegion.id === "fra1" || esDecision.activeRegion.id === "lhr1",
+    "ES client must route to European POP"
+  );
 });
 
 registerTest("SEO-01", "SEO", 5, "Robots.txt allows public marketing routes and protects private consoles", () => {

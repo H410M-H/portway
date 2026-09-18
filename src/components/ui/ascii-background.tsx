@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface AsciiBackgroundProps {
   opacity?: number;
@@ -29,7 +29,7 @@ export function AsciiBackground({
   className = "",
 }: AsciiBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: -1000, y: -1000 });
+  const mousePosRef = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,9 +75,10 @@ export function AsciiBackground({
           let intensity = (wave1 + wave2 + wave3 + 3) / 6; // 0 to 1
 
           // Proximity boost to mouse position
-          if (interactive && mousePos.x > 0) {
-            const dx = x - mousePos.x;
-            const dy = y - mousePos.y;
+          const curMouse = mousePosRef.current;
+          if (interactive && curMouse.x > 0) {
+            const dx = x - curMouse.x;
+            const dy = y - curMouse.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < 180) {
               intensity = Math.min(1, intensity + (1 - dist / 180) * 0.7);
@@ -107,7 +108,7 @@ export function AsciiBackground({
     render();
 
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
     };
 
     if (interactive) {

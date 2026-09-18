@@ -20,6 +20,7 @@ import "./tier1.test";
 import "./tier2.test";
 import "./tier3.test";
 import "./tier4.test";
+import "./tier5-next-modules.test";
 
 // Parse CLI arguments
 const args = process.argv.slice(2);
@@ -34,6 +35,7 @@ const TIER_TITLES: Record<number, string> = {
   2: "Tier 2 — Boundary & Corner Cases (F1 to F20)",
   3: "Tier 3 — Pairwise Cross-Feature Combinations",
   4: "Tier 4 — Real-World Application Scenarios",
+  5: "Tier 5 — Next Modules up to M7 (M5 Edge, M6 CLI/OpenAPI, M7 Shell/Studio, GEO & SEO)",
 };
 
 async function runSuite() {

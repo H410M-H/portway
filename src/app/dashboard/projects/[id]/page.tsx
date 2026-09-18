@@ -5,8 +5,23 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc-client";
 import { DatabaseProvider } from "@prisma/client";
+import { EdgeProxyConsole } from "@/components/dashboard/edge-proxy-console";
+import { CliManifestConsole } from "@/components/dashboard/cli-manifest-console";
+import { WebShell } from "@/components/dashboard/web-shell";
+import { QueryStudio } from "@/components/dashboard/query-studio";
 
-type ConsoleTab = "services" | "deployments" | "logs" | "metrics" | "databases" | "domains" | "settings";
+type ConsoleTab =
+  | "services"
+  | "deployments"
+  | "logs"
+  | "metrics"
+  | "databases"
+  | "domains"
+  | "edge-proxy"
+  | "cli-deploy"
+  | "shell"
+  | "query-studio"
+  | "settings";
 
 function ProjectConsoleContent() {
   const params = useParams();
@@ -630,6 +645,10 @@ function ProjectConsoleContent() {
             { id: "metrics", label: "Metrics & Charts", icon: "📈" },
             { id: "databases", label: "Databases & Storage", icon: "🐘" },
             { id: "domains", label: "Domains & SSL", icon: "🌐" },
+            { id: "edge-proxy", label: "Edge Networking (M5)", icon: "🌍" },
+            { id: "cli-deploy", label: "CLI & Manifest (M6)", icon: "💻" },
+            { id: "shell", label: "Container Shell (M7)", icon: "📟" },
+            { id: "query-studio", label: "Query Studio (M7)", icon: "🗄️" },
             { id: "settings", label: "Settings & Variables", icon: "⚙️" },
           ] as { id: ConsoleTab; label: string; icon: string }[]
         ).map((t) => (
@@ -1788,6 +1807,27 @@ function ProjectConsoleContent() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ── TAB: EDGE NETWORKING (M5) ── */}
+      {activeTab === "edge-proxy" && <EdgeProxyConsole />}
+
+      {/* ── TAB: CLI & MANIFEST (M6) ── */}
+      {activeTab === "cli-deploy" && (
+        <CliManifestConsole projectName={project?.name || "syncbay-app"} />
+      )}
+
+      {/* ── TAB: CONTAINER WEB SHELL (M7) ── */}
+      {activeTab === "shell" && (
+        <WebShell
+          serviceId={activeService?.id || ""}
+          serviceName={activeService?.name || "web"}
+        />
+      )}
+
+      {/* ── TAB: DATABASE QUERY STUDIO (M7) ── */}
+      {activeTab === "query-studio" && (
+        <QueryStudio databases={defaultEnv?.databases || []} />
       )}
 
       {/* ── Add Custom Domain Modal ── */}

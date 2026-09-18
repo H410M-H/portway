@@ -62,9 +62,9 @@ Syncbay is a high-performance, developer-centric Platform-as-a-Service (PaaS) bu
 | M2 | Deployment Orchestrator, Dual-Driver, Logs/Metrics & GitHub | Deployment state machine & Dual-Driver (F9, F10, F11), SSE Log & Metrics streams (F12, F13), GitHub webhooks & PR preview manager (F19, F20) | M1 | COMPLETED ✔ |
 | M3 | Complete Dashboard UI & Page Hierarchy (Zero 404s) | Dynamic workspace view (F1), 7-tab project console (F2), global settings (F3), resource creation flows (F4), navigation zero-404 routes & switcher (F5) | M1, M2 | COMPLETED ✔ |
 | M4 | Final Milestone: 100% E2E Test Pass & Coverage Hardening | Phase 1: Pass 100% of E2E test suite (Tiers 1-4, 222/222 passing). Phase 2: Adversarial coverage hardening. Type-check (`npx tsc --noEmit` = 0) and production build (`npm run build` = 17/17 routes) | M1, M2, M3 | COMPLETED ✔ |
-| M5 | Multi-Region Edge Networking & Cloud Container Proxy | Production Cloudflare Containers driver, edge TLS termination, multi-region routing & failover | M1-M4 | NEXT UP |
-| M6 | Syncbay Developer CLI (`pw`) & Public OpenAPI Platform | Standalone Go/Node CLI, `syncbay.json` schema, GitHub Actions deploy step, API token authentication | M1-M4 | PLANNED |
-| M7 | Interactive Web Shell & Database Query Studio | XTerm.js VT100 web terminal connecting to container stdin/stdout, embedded SQL query runner | M1-M4 | PLANNED |
+| M5 | Multi-Region Edge Networking & Cloud Container Proxy | 6 Tier-1 global POPs, latency routing, automated failover cascade, TLS 1.3/HTTP3 | M1-M4 | COMPLETED ✔ |
+| M6 | Syncbay Developer CLI (`syncbay`) & Public OpenAPI Platform | Standalone CLI, `syncbay.json` manifest engine, GitHub Actions deploy step, `/api/v1/*` OpenAPI 3.1 platform | M1-M4 | COMPLETED ✔ |
+| M7 | Interactive Web Shell & Database Query Studio | VT100 web terminal connecting to container environment, embedded SQL & Redis query studio with schema browser | M1-M4 | COMPLETED ✔ |
 
 ## Interface Contracts
 

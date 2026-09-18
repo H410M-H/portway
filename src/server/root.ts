@@ -10,11 +10,13 @@ import { domainRouter } from "@/server/routers/domain";
 import { volumeRouter } from "@/server/routers/volume";
 import { metricsRouter } from "@/server/routers/metrics";
 import { tokenRouter } from "@/server/routers/token";
+import { edgeRouter } from "@/server/routers/edge";
+import { shellRouter } from "@/server/routers/shell";
+import { queryStudioRouter } from "@/server/routers/query-studio";
 
 /**
  * Root tRPC router — all sub-routers are merged here.
- * The dashboard and (Phase 4) public API consume this same router.
- * FR-API-01: dashboard SHALL consume the same API, not a privileged internal one.
+ * The dashboard and public API consume this same router.
  */
 export const appRouter = createTRPCRouter({
   workspace: workspaceRouter,
@@ -28,6 +30,9 @@ export const appRouter = createTRPCRouter({
   volume: volumeRouter,
   metrics: metricsRouter,
   token: tokenRouter,
+  edge: edgeRouter,
+  shell: shellRouter,
+  queryStudio: queryStudioRouter,
 });
 
 export type AppRouter = typeof appRouter;

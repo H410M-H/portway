@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 
 export function SignInForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@portway.dev");
-  const [password, setPassword] = useState("Password123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
@@ -116,25 +116,6 @@ export function SignInForm() {
           {isLoading ? "Signing in..." : "Sign in with Email"}
         </button>
       </form>
-
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "12px",
-          background: "var(--bg-overlay)",
-          borderRadius: "var(--radius-sm)",
-          border: "1px solid var(--border-subtle)",
-          fontSize: "0.8rem",
-          color: "var(--text-secondary)",
-          lineHeight: 1.6,
-        }}
-      >
-        <strong style={{ color: "var(--text-primary)" }}>Default Credentials:</strong>
-        <br />
-        Email: <code>admin@portway.dev</code>
-        <br />
-        Password: <code>Password123!</code>
-      </div>
     </div>
   );
 }

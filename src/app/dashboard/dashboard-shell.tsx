@@ -92,7 +92,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("portway_active_ws");
+      const stored = localStorage.getItem("syncbay_active_ws");
       if (stored) setExplicitWsId(stored);
     }
   }, []);
@@ -107,7 +107,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
     setSidebarDropdownOpen(false);
     setExplicitWsId(ws.id);
     if (typeof window !== "undefined") {
-      localStorage.setItem("portway_active_ws", ws.id);
+      localStorage.setItem("syncbay_active_ws", ws.id);
     }
 
     if (pathname === "/dashboard" || slugInPath) {
@@ -131,7 +131,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
       setNewWsSlug("");
       setExplicitWsId(created.id);
       if (typeof window !== "undefined") {
-        localStorage.setItem("portway_active_ws", created.id);
+        localStorage.setItem("syncbay_active_ws", created.id);
       }
       router.push(`/dashboard/${created.slug}`);
     } catch (err: any) {
@@ -157,7 +157,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         setCurrentWorkspaceId: (id: string) => {
           setExplicitWsId(id);
           if (typeof window !== "undefined") {
-            localStorage.setItem("portway_active_ws", id);
+            localStorage.setItem("syncbay_active_ws", id);
           }
         },
         refetchWorkspaces,
@@ -168,7 +168,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         <header className="topbar">
           <Link href="/dashboard" className="logo">
             <div className="logo-icon">⚓</div>
-            Portway
+            Syncbay
           </Link>
 
           {/* Dynamic Workspace Switcher Dropdown in Topbar */}

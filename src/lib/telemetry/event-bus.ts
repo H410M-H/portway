@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Real-Time Telemetry & Log Event Bus (F12, F13)
+ * Syncbay PaaS — Real-Time Telemetry & Log Event Bus (F12, F13)
  * In-memory ring buffer event bus streaming build steps and container stdout/stderr
  * with live telemetry metrics generator matching PROJECT.md interface contract.
  */

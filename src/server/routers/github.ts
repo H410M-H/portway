@@ -16,42 +16,7 @@ export const githubRouter = createTRPCRouter({
     });
 
     if (!account || !account.access_token) {
-      // User is authenticated via credentials or hasn't linked GitHub yet.
-      // Return starter templates so they can test deployment out of the box.
-      return [
-        {
-          id: 101,
-          name: "nextjs-starter",
-          fullName: "portway-samples/nextjs-starter",
-          htmlUrl: "https://github.com/vercel/next.js",
-          private: false,
-          defaultBranch: "main",
-        },
-        {
-          id: 102,
-          name: "fastapi-service",
-          fullName: "portway-samples/fastapi-service",
-          htmlUrl: "https://github.com/fastapi/fastapi",
-          private: false,
-          defaultBranch: "master",
-        },
-        {
-          id: 103,
-          name: "go-http-service",
-          fullName: "portway-samples/go-http-service",
-          htmlUrl: "https://github.com/golang/example",
-          private: false,
-          defaultBranch: "master",
-        },
-        {
-          id: 104,
-          name: "rust-web-service",
-          fullName: "portway-samples/rust-web-service",
-          htmlUrl: "https://github.com/tokio-rs/axum",
-          private: false,
-          defaultBranch: "main",
-        },
-      ];
+      return [];
     }
 
     try {

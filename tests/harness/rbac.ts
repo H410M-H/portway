@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Workspace RBAC, 7-Tab Navigation & Volume Reference Oracle (F1, F2, F3, F4, F5, F18)
+ * Syncbay PaaS — Workspace RBAC, 7-Tab Navigation & Volume Reference Oracle (F1, F2, F3, F4, F5, F18)
  * Verifies role authorization, spending cap alerts, API token scopes,
  * 7-tab console contracts, and volume mounting validations.
  */

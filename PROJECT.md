@@ -1,7 +1,7 @@
-# Project: Portway PaaS
+# Project: Syncbay PaaS
 
 ## Architecture
-Portway is a high-performance, developer-centric Platform-as-a-Service (PaaS) built with Next.js 16 (App Router), React 19, TypeScript, tRPC, and Prisma ORM.
+Syncbay is a high-performance, developer-centric Platform-as-a-Service (PaaS) built with Next.js 16 (App Router), React 19, TypeScript, tRPC, and Prisma ORM.
 
 ```
                   ┌─────────────────────────────────────────────────────────┐
@@ -47,7 +47,7 @@ Portway is a high-performance, developer-centric Platform-as-a-Service (PaaS) bu
 | F11 | Blue/Green Health Checks | Automated HTTP health checks gating traffic shift with instant auto-rollback on failure | M2 | R3 |
 | F12 | Real-Time SSE Log Console | In-memory ring buffer event bus streaming build steps and container stdout/stderr to browser terminal | M2 | R4 |
 | F13 | Real-Time Live Metrics | Live CPU, memory, network egress, and disk usage telemetry stream and visualization area charts | M2 | R4 |
-| F14 | Dynamic Subdomains & Domains | Default subdomains (`<service>-<env>.portway.app`) and custom hostname registration | M1 | R5 |
+| F14 | Dynamic Subdomains & Domains | Default subdomains (`<service>-<env>.syncbay.app`) and custom hostname registration | M1 | R5 |
 | F15 | CNAME/TXT & SSL Flow | Automated CNAME/TXT verification record generation, status tracking, and SSL certificate provisioning | M1 | R5 |
 | F16 | Managed Databases | Postgres, Redis/Valkey, MySQL provisioning, connection string generation, and credential management | M1 | R6 |
 | F17 | Object Storage & Presigned URLs | S3/Cloudflare R2 compatible bucket provisioning, access keys, and presigned upload/download URLs | M1 | R6 |
@@ -63,7 +63,7 @@ Portway is a high-performance, developer-centric Platform-as-a-Service (PaaS) bu
 | M3 | Complete Dashboard UI & Page Hierarchy (Zero 404s) | Dynamic workspace view (F1), 7-tab project console (F2), global settings (F3), resource creation flows (F4), navigation zero-404 routes & switcher (F5) | M1, M2 | COMPLETED ✔ |
 | M4 | Final Milestone: 100% E2E Test Pass & Coverage Hardening | Phase 1: Pass 100% of E2E test suite (Tiers 1-4, 222/222 passing). Phase 2: Adversarial coverage hardening. Type-check (`npx tsc --noEmit` = 0) and production build (`npm run build` = 17/17 routes) | M1, M2, M3 | COMPLETED ✔ |
 | M5 | Multi-Region Edge Networking & Cloud Container Proxy | Production Cloudflare Containers driver, edge TLS termination, multi-region routing & failover | M1-M4 | NEXT UP |
-| M6 | Portway Developer CLI (`pw`) & Public OpenAPI Platform | Standalone Go/Node CLI, `portway.json` schema, GitHub Actions deploy step, API token authentication | M1-M4 | PLANNED |
+| M6 | Syncbay Developer CLI (`pw`) & Public OpenAPI Platform | Standalone Go/Node CLI, `syncbay.json` schema, GitHub Actions deploy step, API token authentication | M1-M4 | PLANNED |
 | M7 | Interactive Web Shell & Database Query Studio | XTerm.js VT100 web terminal connecting to container stdin/stdout, embedded SQL query runner | M1-M4 | PLANNED |
 
 ## Interface Contracts

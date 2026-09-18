@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
   // Handle push event
   if (eventName === "push") {
-    const repoUrl = payload.repository.html_url; // e.g., https://github.com/H410M-H/portway
+    const repoUrl = payload.repository.html_url; // e.g., https://github.com/H410M-H/syncbay
     const branchRef = payload.ref; // e.g., refs/heads/main
     const branch = branchRef.replace("refs/heads/", "");
     const commitSha = payload.after;

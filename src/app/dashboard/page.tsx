@@ -77,7 +77,7 @@ export default async function DashboardPage() {
         <div className="stat-card">
           <div className="stat-label">Platform</div>
           <div className="stat-value" style={{ fontSize: "1.1rem", marginTop: "4px" }}>
-            Portway v0.1
+            Syncbay v0.1
           </div>
           <div className="stat-change">Phase 0 — skeleton</div>
         </div>

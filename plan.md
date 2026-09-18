@@ -1,6 +1,6 @@
-# Portway: Phase 1-4 Implementation Plan
+# Syncbay: Phase 1-4 Implementation Plan
 
-This document outlines the detailed technical plan for implementing Phases 1 through 4 of Portway, building upon the Phase 0 control-plane skeleton.
+This document outlines the detailed technical plan for implementing Phases 1 through 4 of Syncbay, building upon the Phase 0 control-plane skeleton.
 
 ## Phase 1: MVP Deploy Loop ("It Works")
 
@@ -14,7 +14,7 @@ This document outlines the detailed technical plan for implementing Phases 1 thr
     *   **Webhook Handler:** `POST /api/webhooks/github` to receive `push` and `pull_request` events.
     *   **Webhook Logic:**
         1. Validate HMAC signature.
-        2. Find the Portway `Service` matching the repo URL and branch.
+        2. Find the Syncbay `Service` matching the repo URL and branch.
         3. If a match is found and auto-deploy is enabled, trigger a new `Build`.
 
 ### 2. The Orchestrator (Job Queue)
@@ -28,7 +28,7 @@ This document outlines the detailed technical plan for implementing Phases 1 thr
 *   **Logic:**
     *   When `job.build` runs, it calls the Cloudflare Containers API to spin up an *ephemeral* build container.
     *   This container clones the repo, reads the `Dockerfile` (or uses Nixpacks if absent), builds the OCI image, and pushes it to Cloudflare's internal registry (or a private registry like GitHub Container Registry).
-    *   **Logs:** The build container streams logs back to Portway (e.g., via WebSocket or writing to a temporary R2 bucket/Redis stream which the control plane polls).
+    *   **Logs:** The build container streams logs back to Syncbay (e.g., via WebSocket or writing to a temporary R2 bucket/Redis stream which the control plane polls).
     *   Upon success, the job updates the `Build` record to `SUCCEEDED` and enqueues `job.deploy`.
 
 ### 4. Deployment & Networking
@@ -52,8 +52,8 @@ This document outlines the detailed technical plan for implementing Phases 1 thr
 ### 1. Custom Domains
 *   **Logic:**
     *   Users add a custom domain to a `Service`.
-    *   Portway calls the Cloudflare API (`POST /client/v4/zones/{zone_id}/custom_hostnames` - Cloudflare for SaaS) to provision the hostname and generate SSL certificates.
-    *   Portway provides TXT/CNAME records to the user for validation.
+    *   Syncbay calls the Cloudflare API (`POST /client/v4/zones/{zone_id}/custom_hostnames` - Cloudflare for SaaS) to provision the hostname and generate SSL certificates.
+    *   Syncbay provides TXT/CNAME records to the user for validation.
     *   A cron job or webhook verifies the domain status and updates the `Domain` record.
 
 ### 2. Auto-Rollback & Health Checks
@@ -116,11 +116,11 @@ This document outlines the detailed technical plan for implementing Phases 1 thr
 *   **Logic:**
     *   Since the dashboard uses tRPC, we can expose the underlying logic via a REST API (using `trpc-openapi`) or provide a typed SDK.
     *   Implement API Token authentication (validating tokens passed in the `Authorization: Bearer` header).
-    *   Build a Go or Node.js based CLI (`portway up`, `portway logs`) that communicates with this public API.
+    *   Build a Go or Node.js based CLI (`syncbay up`, `syncbay logs`) that communicates with this public API.
 
 ### 2. Templates (1-Click Deploys)
 *   **Logic:**
-    *   Define a YAML/JSON manifest format (e.g., `portway.yml`) that describes services, env vars, and databases.
+    *   Define a YAML/JSON manifest format (e.g., `syncbay.yml`) that describes services, env vars, and databases.
     *   Build an engine that parses the manifest, prompts for required secrets, and orchestrates the creation of all resources in a new project.
 
 ### 3. AI Operations Agent

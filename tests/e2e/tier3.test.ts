@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Tier 3: Pairwise Cross-Feature Combinations Test Suite
+ * Syncbay PaaS — Tier 3: Pairwise Cross-Feature Combinations Test Suite
  * 12 Cross-Feature Interaction Tests connecting interdependent subsystems.
  */
 
@@ -94,7 +94,7 @@ registerTest(
   async () => {
     const sm = adapter.createStateMachine();
     const subdomain = adapter.generateDefaultSubdomain("api-gateway", "production");
-    assertEqual(subdomain, "api-gateway-production.portway.app");
+    assertEqual(subdomain, "api-gateway-production.syncbay.app");
 
     sm.createDeployment({ id: "rel_v1", serviceId: "svc_gateway", healthCheckUrl: "/healthz" });
     const result = await sm.executeDeploymentLifecycle("rel_v1", {
@@ -266,7 +266,7 @@ registerTest(
     assertEqual(prRes.action, "opened");
     const previewEnv = prRes.environment!;
     assertEqual(previewEnv.clonedVariables.STRIPE_KEY, "pk_test_123");
-    assertEqual(previewEnv.previewUrl, "https://checkout-pr-42.portway.app");
+    assertEqual(previewEnv.previewUrl, "https://checkout-pr-42.syncbay.app");
 
     // Gated by health check
     const sm = adapter.createStateMachine();
@@ -378,7 +378,7 @@ registerTest(
   async () => {
     const domain = "app.myshop.com";
     const records = adapter.generateVerificationRecords(domain);
-    assertEqual(records.cnameTarget, "cname.portway.app");
+    assertEqual(records.cnameTarget, "cname.syncbay.app");
 
     // Verification simulated success
     const domainState = { hostname: domain, status: "ACTIVE", sslActive: true };

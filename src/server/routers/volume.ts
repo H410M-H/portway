@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Persistent Storage Volumes tRPC Router (R6 Core)
+ * Syncbay PaaS — Persistent Storage Volumes tRPC Router (R6 Core)
  * Manages persistent disk volumes mounted to stateful container services.
  */
 

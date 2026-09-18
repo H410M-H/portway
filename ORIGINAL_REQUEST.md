@@ -2,9 +2,9 @@
 
 ## 2026-09-16T22:50:53Z
 
-Build and complete all SRS modules and dashboard pages for Portway, a Railway-class PaaS: implementing the complete deployment lifecycle, Nixpacks/Dockerfile runtime auto-detection, real-time SSE build & runtime console, dual-driver orchestration (local container simulator + cloud edge proxy), managed databases, R2 buckets, custom domains with automated SSL, and GitHub push/PR preview environments.
+Build and complete all SRS modules and dashboard pages for Syncbay, a Railway-class PaaS: implementing the complete deployment lifecycle, Nixpacks/Dockerfile runtime auto-detection, real-time SSE build & runtime console, dual-driver orchestration (local container simulator + cloud edge proxy), managed databases, R2 buckets, custom domains with automated SSL, and GitHub push/PR preview environments.
 
-Working directory: c:/msns/portway
+Working directory: c:/msns/syncbay
 Integrity mode: demo
 
 ## Requirements
@@ -33,7 +33,7 @@ Integrity mode: demo
 - Real-time CPU usage, memory utilization, network egress, and disk usage graphs with historical inspection and live-updating telemetry.
 
 ### R5. Edge Reverse Proxy, Custom Domains & SSL
-- Dynamic routing for default subdomains (`<service>-<env>.portway.app` or `.portway.run`) and custom hostnames.
+- Dynamic routing for default subdomains (`<service>-<env>.syncbay.app` or `.syncbay.run`) and custom hostnames.
 - Automated CNAME/TXT verification record generation, status tracking, and automated SSL certificate provisioning flow.
 
 ### R6. Managed Databases, Object Storage & Persistent Storage

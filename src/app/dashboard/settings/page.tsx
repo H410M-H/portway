@@ -157,7 +157,7 @@ export default function SettingsPage() {
         {(() => {
           const currentMember = activeWorkspace?.members?.find((m: any) => m.userId === dashboard?.user?.id);
           const userName = dashboard?.user?.name || currentMember?.user?.name || "Developer";
-          const userEmail = dashboard?.user?.email || currentMember?.user?.email || "developer@portway.local";
+          const userEmail = dashboard?.user?.email || currentMember?.user?.email || "developer@syncbay.local";
           const userRole = currentMember?.role || (activeWorkspace?.isPersonal ? "OWNER" : "MEMBER");
 
           return (
@@ -267,7 +267,7 @@ export default function SettingsPage() {
           <div>
             <h3 style={{ marginBottom: "6px" }}>API Access Tokens</h3>
             <p style={{ fontSize: "0.875rem" }}>
-              Tokens allow automated CLI, GitHub Actions, and external agents to authenticate with Portway.
+              Tokens allow automated CLI, GitHub Actions, and external agents to authenticate with Syncbay.
             </p>
           </div>
           <button

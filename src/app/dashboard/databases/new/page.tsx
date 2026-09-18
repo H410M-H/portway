@@ -300,7 +300,7 @@ function NewDatabaseWizardContent() {
             <h4 style={{ fontSize: "0.9375rem" }}>Automatic Environment Variable Injection</h4>
           </div>
           <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
-            Portway will automatically generate and inject{" "}
+            Syncbay will automatically generate and inject{" "}
             <code style={{ color: "var(--brand-accent)", fontWeight: 600 }}>{envVarName}</code> and{" "}
             <code style={{ color: "var(--brand-accent)", fontWeight: 600 }}>${`{{ ${name || "DB"}.URL }}`}</code>{" "}
             into all services in this environment. Your app can read this directly from <code>process.env.{envVarName}</code>.

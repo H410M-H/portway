@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Tier 4: Real-World Application Scenarios Test Suite
+ * Syncbay PaaS — Tier 4: Real-World Application Scenarios Test Suite
  * 10 Comprehensive End-to-End Application Deployment Workflows.
  */
 
@@ -37,7 +37,7 @@ registerTest(
     assertEqual(detected.framework, "nextjs");
 
     // 2. Managed PostgreSQL Provisioning
-    const rawPgUrl = "postgresql://postgres:pw123@db.portway.internal:5432/saas_prod?sslmode=require";
+    const rawPgUrl = "postgresql://postgres:pw123@db.syncbay.internal:5432/saas_prod?sslmode=require";
     const pgCreds = adapter.parseDatabaseUrl(rawPgUrl);
     assertEqual(pgCreds.port, 5432);
     assertEqual(pgCreds.database, "saas_prod");
@@ -115,8 +115,8 @@ registerTest(
     const domain = "api.company.com";
     assertTrue(adapter.isValidHostname(domain));
     const records = adapter.generateVerificationRecords(domain);
-    assertEqual(records.cnameTarget, "cname.portway.app");
-    assertTrue(records.txtRecord.startsWith("portway-verification="));
+    assertEqual(records.cnameTarget, "cname.syncbay.app");
+    assertTrue(records.txtRecord.startsWith("syncbay-verification="));
 
     // 4. Blue/Green Deployment with Health Check Pass
     const sm = adapter.createStateMachine();
@@ -165,8 +165,8 @@ registerTest(
     const env = openRes.environment!;
     assertEqual(env.prNumber, 101);
     assertEqual(env.clonedVariables.NEXT_PUBLIC_ENV, "preview");
-    assertEqual(env.previewUrl, "https://web-pr-101.portway.app");
-    assertIncludes(openRes.commentBody!, "Portway Ephemeral Preview Ready");
+    assertEqual(env.previewUrl, "https://web-pr-101.syncbay.app");
+    assertIncludes(openRes.commentBody!, "Syncbay Ephemeral Preview Ready");
 
     // 2. PR Synchronize (New Commit pushed to branch)
     const syncRes = pm.handlePullRequestWebhook({
@@ -252,7 +252,7 @@ registerTest(
     // 1. Go Runtime Detection
     const detected = adapter.detectRuntime(["go.mod", "main.go"], {
       fileContents: {
-        "go.mod": "module github.com/portway/blob-indexer\n\ngo 1.22\n",
+        "go.mod": "module github.com/syncbay/blob-indexer\n\ngo 1.22\n",
       },
     });
     assertEqual(detected.language, "go");
@@ -394,12 +394,12 @@ registerTest(
   "Microservices Mesh with Inter-Service Variable References",
   async () => {
     // Topology:
-    // 1. auth-svc: port 4000, domain: auth-prod.portway.app
+    // 1. auth-svc: port 4000, domain: auth-prod.syncbay.app
     // 2. worker-svc: port 9000, internalHost: worker.internal
     // 3. api-gateway: references ${{ auth-svc.URL }} and ${{ worker-svc.PORT }}
 
     const services = [
-      { name: "auth-svc", domain: "auth-prod.portway.app", port: 4000 },
+      { name: "auth-svc", domain: "auth-prod.syncbay.app", port: 4000 },
       { name: "worker-svc", internalHost: "worker.internal", port: 9000 },
     ];
 
@@ -409,7 +409,7 @@ registerTest(
     ];
 
     const resolved = adapter.resolveEnvironmentVariables(gatewayVars, { services });
-    assertEqual(resolved[0].value, "https://auth-prod.portway.app");
+    assertEqual(resolved[0].value, "https://auth-prod.syncbay.app");
     assertEqual(resolved[1].value, "9000");
     assertTrue(resolved.every((r) => r.resolved));
   }

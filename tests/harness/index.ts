@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — E2E Test Harness Core
+ * Syncbay PaaS — E2E Test Harness Core
  * Provides deterministic assertions, test registry, and runner utilities.
  */
 

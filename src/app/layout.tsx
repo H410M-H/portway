@@ -17,16 +17,16 @@ function getBaseUrl() {
 }
 
 export const metadata: Metadata = {
-  title: { default: "Portway", template: "%s — Portway" },
+  title: { default: "Syncbay", template: "%s — Syncbay" },
   description:
-    "Portway — Cloud Application Platform. Deploy from GitHub, attach databases, observe everything.",
+    "Syncbay — Cloud Application Platform. Deploy from GitHub, attach databases, observe everything.",
   metadataBase: new URL(getBaseUrl()),
   openGraph: {
     type: "website",
-    title: "Portway",
+    title: "Syncbay",
     description:
       "A Railway-class PaaS. Deploy any Dockerfile or buildpack, attach a managed Postgres, watch it run.",
-    siteName: "Portway",
+    siteName: "Syncbay",
   },
   robots: { index: false, follow: false }, // private dashboard
 };

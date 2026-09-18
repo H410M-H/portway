@@ -120,7 +120,7 @@ function InviteContent() {
           </div>
           <h2 style={{ fontSize: "1.5rem", marginBottom: "6px" }}>Workspace Invitation</h2>
           <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-            You have been invited to collaborate on Portway.
+            You have been invited to collaborate on Syncbay.
           </p>
         </div>
 

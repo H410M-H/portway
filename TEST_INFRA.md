@@ -1,10 +1,10 @@
-# Test Infrastructure & Specification: Portway PaaS E2E Test Suite
+# Test Infrastructure & Specification: Syncbay PaaS E2E Test Suite
 
 ## 1. Test Philosophy & Principles
 
-Portway is a Railway-class Developer Platform as a Service (PaaS) engineered to handle automated buildpack runtime detection, Nixpacks container plan generation, dynamic variable resolution with inter-service references, zero-downtime blue/green deployment orchestration, real-time SSE log/metrics streaming, managed databases, object storage, custom domain SSL provisioning, and ephemeral GitHub PR preview environments.
+Syncbay is a Railway-class Developer Platform as a Service (PaaS) engineered to handle automated buildpack runtime detection, Nixpacks container plan generation, dynamic variable resolution with inter-service references, zero-downtime blue/green deployment orchestration, real-time SSE log/metrics streaming, managed databases, object storage, custom domain SSL provisioning, and ephemeral GitHub PR preview environments.
 
-The Portway E2E test suite adheres to five core testing principles:
+The Syncbay E2E test suite adheres to five core testing principles:
 
 1. **Opaque-Box & Requirement-Driven**:
    Tests are derived strictly from user requirements in `ORIGINAL_REQUEST.md` and architectural interface contracts in `PROJECT.md`. Tests verify external observable behavior, API responses, state transitions, and contract invariants without coupling to internal private implementation details.
@@ -40,7 +40,7 @@ The Portway E2E test suite adheres to five core testing principles:
 | **F11** | Blue/Green Health Checks | Automated HTTP health checks gating traffic shift with instant auto-rollback on failure | M2 | `src/lib/orchestrator/orchestrator.ts` -> `checkHealth`, `rollbackDeployment` |
 | **F12** | Real-Time SSE Log Console | In-memory ring buffer event bus streaming build steps and container stdout/stderr | M2 | `src/lib/telemetry/event-bus.ts`, `/api/deployments/[id]/logs/stream` |
 | **F13** | Real-Time Live Metrics | Live CPU, memory, network egress, and disk usage telemetry stream and area chart formatting | M2 | `src/lib/telemetry/metrics-generator.ts`, `/api/deployments/[id]/metrics/stream` |
-| **F14** | Dynamic Subdomains & Domains | Default subdomains (`<service>-<env>.portway.app`) and custom hostname registration | M1 | `src/lib/domain-service.ts` -> `generateDefaultSubdomain` |
+| **F14** | Dynamic Subdomains & Domains | Default subdomains (`<service>-<env>.syncbay.app`) and custom hostname registration | M1 | `src/lib/domain-service.ts` -> `generateDefaultSubdomain` |
 | **F15** | CNAME/TXT & SSL Flow | Automated CNAME/TXT verification record generation, status tracking, and SSL certificate provisioning | M1 | `src/lib/domain-service.ts` -> `generateVerificationRecords`, `verifyDomain` |
 | **F16** | Managed Databases | Postgres, Redis/Valkey, MySQL provisioning, connection string generation, and credential management | M1 | `src/lib/database-provider.ts` -> `provision`, `parseDatabaseUrl` |
 | **F17** | Object Storage & Presigned URLs | S3/Cloudflare R2 compatible bucket provisioning, access keys, and presigned upload/download URLs | M1 | `src/lib/storage-provider.ts` -> `provisionBucket`, `generatePresignedUrl` |
@@ -101,7 +101,7 @@ Focuses on the primary behavior and happy-path specifications for each of the 20
 - **F11**: Health check endpoint querying, successful HTTP 200 promotion, unhealthy HTTP 500 rejection, traffic gating invariant, automatic rollback invocation.
 - **F12**: Event bus publishing, subscriber event reception, log streaming format (`stdout`/`stderr`/`system`), historical log buffer retention, SSE stream header correctness.
 - **F13**: CPU metric generation, memory metric generation, network egress calculation, disk usage tracking, interval polling updates.
-- **F14**: Platform default subdomain generation (`<service>-<env>.portway.app`), custom domain creation, RFC 1123 hostname validation, domain association with service.
+- **F14**: Platform default subdomain generation (`<service>-<env>.syncbay.app`), custom domain creation, RFC 1123 hostname validation, domain association with service.
 - **F15**: CNAME verification target generation, TXT record token generation, verification state check (`PENDING` -> `ACTIVE`), SSL certificate provisioning state, DNS mismatch handling.
 - **F16**: Managed PostgreSQL provisioning, Redis provisioning, MySQL provisioning, connection string parsing into structured credentials, CLI connect command generation.
 - **F17**: Bucket provisioning, R2 bucket reference generation, SigV4 presigned PUT URL generation, SigV4 presigned GET URL generation, expiration timestamp validation.
@@ -141,7 +141,7 @@ Focuses on integration between interdependent subsystems:
 5. **F16 (Managed DB) + F8 (Env Var Resolution) + F10 (Driver Build)**: Provisioning a PostgreSQL instance, resolving `${{ Postgres.CONNECTION_STRING }}` in service variables, and verifying container startup with injected credentials.
 6. **F17 (Object Storage) + F8 (Env Var Resolution) + F14 (Custom Domain)**: Provisioning an R2 bucket, resolving `${{ Bucket.PUBLIC_URL }}` in service environment variables, and binding custom domain for assets.
 7. **F19 (GitHub Push) + F6 (Detection) + F9 (Deployment Lifecycle)**: Receiving a GitHub push webhook, auto-detecting Python runtime, creating build record, and driving lifecycle to `ACTIVE`.
-8. **F20 (PR Previews) + F8 (Variable Cloning) + F14 (Ephemeral Domain) + F11 (Health Check)**: Opening a PR, cloning production variables, spinning up `pr-42.portway.app`, validating health checks, and generating PR preview URL comment.
+8. **F20 (PR Previews) + F8 (Variable Cloning) + F14 (Ephemeral Domain) + F11 (Health Check)**: Opening a PR, cloning production variables, spinning up `pr-42.syncbay.app`, validating health checks, and generating PR preview URL comment.
 9. **F20 (PR Previews) + F18 (Volume Isolation) + F9 (Teardown Lifecycle)**: Closing a PR, tearing down ephemeral preview containers, cleaning up temporary volumes, and transitioning environment state.
 10. **F1 (Workspace RBAC) + F3 (API Tokens) + F4 (Service Creation) + F18 (Volume Mount)**: Authenticating with a `DEPLOY_ONLY` API token, creating a new service with attached storage volume, and verifying audit log entry.
 11. **F12 (SSE Logs) + F13 (Live Metrics) + F10 (Dual Driver Concurrency)**: Running concurrent builds on the local driver while verifying independent SSE log buffers and isolated metric streams.
@@ -150,8 +150,8 @@ Focuses on integration between interdependent subsystems:
 ### Tier 4: Real-World Application Scenarios (10 Comprehensive Scenarios)
 1. **Scenario 1: Full-Stack Next.js 16 App with Managed PostgreSQL & R2 Storage**: Complete project creation, Next.js repo auto-detection, PostgreSQL instance provisioning, R2 bucket creation, variable reference resolution (`${{ Postgres.URL }}`, `${{ Storage.ENDPOINT }}`), Nixpacks plan compilation, deployment to `ACTIVE`, and live log verification.
 2. **Scenario 2: Python Flask REST API with Redis Cache & Custom Domain with SSL**: Python auto-detection (requirements.txt + gunicorn), Redis instance provisioning, custom domain addition (`api.example.com`), CNAME/TXT verification record generation, SSL verification, deployment promotion, and health check pass.
-3. **Scenario 3: Ephemeral GitHub PR Preview Lifecycle (Open -> Deploy -> Sync -> Merge Cleanup)**: GitHub PR #101 `opened` event, automatic provisioning of `pr-101` isolated environment, inheritance of sanitized production variables, deployment to `pr-101-app.portway.app`, PR `synchronize` new commit redeploy, and PR `closed` event triggering clean resource teardown.
-4. **Scenario 4: Zero-Downtime Blue/Green Deployment with Health Check Auto-Rollback**: Active release `v1` serving traffic on `app.portway.app`. Trigger release `v2` with failing health check (`/healthz` returning 500). Health check probe fails threshold, marks `v2` as `FAILED`, triggers instant auto-rollback, keeping `v1` in `ACTIVE` state with zero traffic interruption.
+3. **Scenario 3: Ephemeral GitHub PR Preview Lifecycle (Open -> Deploy -> Sync -> Merge Cleanup)**: GitHub PR #101 `opened` event, automatic provisioning of `pr-101` isolated environment, inheritance of sanitized production variables, deployment to `pr-101-app.syncbay.app`, PR `synchronize` new commit redeploy, and PR `closed` event triggering clean resource teardown.
+4. **Scenario 4: Zero-Downtime Blue/Green Deployment with Health Check Auto-Rollback**: Active release `v1` serving traffic on `app.syncbay.app`. Trigger release `v2` with failing health check (`/healthz` returning 500). Health check probe fails threshold, marks `v2` as `FAILED`, triggers instant auto-rollback, keeping `v1` in `ACTIVE` state with zero traffic interruption.
 5. **Scenario 5: Go Microservice with Persistent Volume Mount & Storage State**: Go repository detection (`go.mod`), persistent volume configuration (`/data`, 10GB), service compilation and startup, volume attachment verification, restart simulation preserving volume reference.
 6. **Scenario 6: Ruby on Rails Application with Multi-Phase Nixpacks & Asset Precompilation**: Rails detection (`Gemfile`), Nixpacks 4-phase plan with `bundle exec rails assets:precompile` and Puma start command, managed PostgreSQL linkage, deployment progression, and SSE build log capture.
 7. **Scenario 7: Rust Web Service with Custom Dockerfile Override**: Rust repository with custom `Dockerfile` overriding buildpack detection, container port extraction from `EXPOSE 8080`, simulated container build and startup, metrics telemetry streaming.

@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Tier 1: Feature Coverage Test Suite (F1 – F20)
+ * Syncbay PaaS — Tier 1: Feature Coverage Test Suite (F1 – F20)
  * 100 tests: Exactly 5 comprehensive happy-path test cases per feature.
  */
 
@@ -109,7 +109,7 @@ registerTest("F2-T1-04", "F2", 1, "Databases & Buckets tab resource aggregation"
 
 registerTest("F2-T1-05", "F2", 1, "Domains & Networking tab configuration state", async () => {
   const domains = [
-    { id: "dom1", hostname: "web-prod.portway.app", isGenerated: true, status: "ACTIVE" },
+    { id: "dom1", hostname: "web-prod.syncbay.app", isGenerated: true, status: "ACTIVE" },
     { id: "dom2", hostname: "example.com", isGenerated: false, status: "ACTIVE" },
   ];
   assertEqual(domains.length, 2);
@@ -121,8 +121,8 @@ registerTest("F2-T1-05", "F2", 1, "Domains & Networking tab configuration state"
 // F3: Global Settings Console
 // =========================================================================
 registerTest("F3-T1-01", "F3", 1, "User profile retrieval and email identity verification", async () => {
-  const user = { id: "u_admin", email: "admin@portway.dev", name: "Admin", totpEnabled: false };
-  assertEqual(user.email, "admin@portway.dev");
+  const user = { id: "u_admin", email: "admin@syncbay.dev", name: "Admin", totpEnabled: false };
+  assertEqual(user.email, "admin@syncbay.dev");
   assertFalse(user.totpEnabled);
 });
 
@@ -273,7 +273,7 @@ registerTest("F6-T1-02", "F6", 1, "Python runtime detection from requirements.tx
 registerTest("F6-T1-03", "F6", 1, "Go runtime detection from go.mod", async () => {
   const detected = adapter.detectRuntime(["go.mod", "main.go"], {
     fileContents: {
-      "go.mod": "module github.com/portway/sample\n\ngo 1.22\n",
+      "go.mod": "module github.com/syncbay/sample\n\ngo 1.22\n",
     },
   });
   assertEqual(detected.language, "go");
@@ -369,10 +369,10 @@ registerTest("F8-T1-02", "F8", 1, "Inter-service reference ${{ Service.URL }} re
   const resolved = adapter.resolveEnvironmentVariables(
     [{ key: "API_URL", value: "${{ BackendService.URL }}" }],
     {
-      services: [{ name: "BackendService", domain: "backend-service.portway.app" }],
+      services: [{ name: "BackendService", domain: "backend-service.syncbay.app" }],
     }
   );
-  assertEqual(resolved[0].value, "https://backend-service.portway.app");
+  assertEqual(resolved[0].value, "https://backend-service.syncbay.app");
   assertTrue(resolved[0].resolved);
 });
 
@@ -636,14 +636,14 @@ registerTest("F13-T1-05", "F13", 1, "SSE telemetry stream message formatting", a
 // =========================================================================
 // F14: Dynamic Subdomains & Domains
 // =========================================================================
-registerTest("F14-T1-01", "F14", 1, "Platform default subdomain generation <service>-<env>.portway.app", async () => {
+registerTest("F14-T1-01", "F14", 1, "Platform default subdomain generation <service>-<env>.syncbay.app", async () => {
   const sub = adapter.generateDefaultSubdomain("web-api", "production");
-  assertEqual(sub, "web-api-production.portway.app");
+  assertEqual(sub, "web-api-production.syncbay.app");
 });
 
 registerTest("F14-T1-02", "F14", 1, "Subdomain slugification with special characters sanitized", async () => {
   const sub = adapter.generateDefaultSubdomain("My Cool Service!!", "staging_env");
-  assertEqual(sub, "my-cool-service-staging-env.portway.app");
+  assertEqual(sub, "my-cool-service-staging-env.syncbay.app");
 });
 
 registerTest("F14-T1-03", "F14", 1, "Custom domain registration syntax validation", async () => {
@@ -661,8 +661,8 @@ registerTest("F14-T1-04", "F14", 1, "RFC 1123 hostname validity checker", async 
 registerTest("F14-T1-05", "F14", 1, "Subdomain collision avoidance with environment suffix", async () => {
   const sub1 = adapter.generateDefaultSubdomain("service", "prod", "v1");
   const sub2 = adapter.generateDefaultSubdomain("service", "prod", "v2");
-  assertEqual(sub1, "service-prod-v1.portway.app");
-  assertEqual(sub2, "service-prod-v2.portway.app");
+  assertEqual(sub1, "service-prod-v1.syncbay.app");
+  assertEqual(sub2, "service-prod-v2.syncbay.app");
   assertTrue(sub1 !== sub2);
 });
 
@@ -671,14 +671,14 @@ registerTest("F14-T1-05", "F14", 1, "Subdomain collision avoidance with environm
 // =========================================================================
 registerTest("F15-T1-01", "F15", 1, "CNAME verification record generation pointing to proxy", async () => {
   const records = adapter.generateVerificationRecords("api.customer.io");
-  assertEqual(records.cnameTarget, "cname.portway.app");
+  assertEqual(records.cnameTarget, "cname.syncbay.app");
   assertEqual(records.cnameHost, "api.customer.io");
 });
 
 registerTest("F15-T1-02", "F15", 1, "TXT verification token generation", async () => {
   const records = adapter.generateVerificationRecords("api.customer.io");
-  assertTrue(records.txtRecord.startsWith("portway-verification="));
-  assertEqual(records.txtHost, "_portway-challenge.api.customer.io");
+  assertTrue(records.txtRecord.startsWith("syncbay-verification="));
+  assertEqual(records.txtHost, "_syncbay-challenge.api.customer.io");
 });
 
 registerTest("F15-T1-03", "F15", 1, "Verification state progression from PENDING to VERIFYING", async () => {
@@ -705,8 +705,8 @@ registerTest("F15-T1-05", "F15", 1, "DNS verification failure state transition t
 // F16: Managed Databases
 // =========================================================================
 registerTest("F16-T1-01", "F16", 1, "Managed PostgreSQL instance URL parsing and credentials extraction", async () => {
-  const creds = adapter.parseDatabaseUrl("postgresql://postgres:secret123@db.portway.internal:5432/production?sslmode=require");
-  assertEqual(creds.host, "db.portway.internal");
+  const creds = adapter.parseDatabaseUrl("postgresql://postgres:secret123@db.syncbay.internal:5432/production?sslmode=require");
+  assertEqual(creds.host, "db.syncbay.internal");
   assertEqual(creds.port, 5432);
   assertEqual(creds.user, "postgres");
   assertEqual(creds.password, "secret123");
@@ -715,22 +715,22 @@ registerTest("F16-T1-01", "F16", 1, "Managed PostgreSQL instance URL parsing and
 });
 
 registerTest("F16-T1-02", "F16", 1, "Managed Redis instance connection parsing and credentials extraction", async () => {
-  const creds = adapter.parseDatabaseUrl("redis://:redispass@cache.portway.internal:6379");
-  assertEqual(creds.host, "cache.portway.internal");
+  const creds = adapter.parseDatabaseUrl("redis://:redispass@cache.syncbay.internal:6379");
+  assertEqual(creds.host, "cache.syncbay.internal");
   assertEqual(creds.port, 6379);
   assertEqual(creds.password, "redispass");
 });
 
 registerTest("F16-T1-03", "F16", 1, "Managed MySQL instance connection parsing and credentials extraction", async () => {
-  const creds = adapter.parseDatabaseUrl("mysql://root:mysqlpass@mysql.portway.internal:3306/shop");
-  assertEqual(creds.host, "mysql.portway.internal");
+  const creds = adapter.parseDatabaseUrl("mysql://root:mysqlpass@mysql.syncbay.internal:3306/shop");
+  assertEqual(creds.host, "mysql.syncbay.internal");
   assertEqual(creds.port, 3306);
   assertEqual(creds.user, "root");
   assertEqual(creds.database, "shop");
 });
 
 registerTest("F16-T1-04", "F16", 1, "PostgreSQL CLI connect command generation (psql ...)", async () => {
-  const creds = adapter.parseDatabaseUrl("postgresql://postgres:secret123@db.portway.internal:5432/prod");
+  const creds = adapter.parseDatabaseUrl("postgresql://postgres:secret123@db.syncbay.internal:5432/prod");
   assertIncludes(creds.cliCommand, "psql");
 });
 

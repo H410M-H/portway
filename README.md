@@ -1,4 +1,4 @@
-# Portway — Cloud Application Platform
+# Syncbay — Cloud Application Platform
 
 > A Railway-class PaaS built on Next.js 15, tRPC, Prisma, and Cloudflare Containers.
 > PRD v0.1 | MSNS-DEV™ | September 2026
@@ -19,7 +19,7 @@
 ## Project Structure
 
 ```
-portway/
+syncbay/
 ├── prisma/
 │   └── schema.prisma          ← Full control-plane schema (§6 of PRD)
 ├── src/
@@ -86,8 +86,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | **Phase 3** | Platform Depth (private net, volumes, feature flags) | Planned |
 | **Phase 4** | Ecosystem (CLI, public API, AI agent, templates) | Planned |
 
-See [`Portway365.md`](../storage/shared/Portway365.md) for the full PRD.
+See [`Syncbay365.md`](../storage/shared/Syncbay365.md) for the full PRD.
 
 ---
 
-*Portway PRD v0.1 · MSNS-DEV™ · September 2026 · DRAFT*
+*Syncbay PRD v0.1 · MSNS-DEV™ · September 2026 · DRAFT*

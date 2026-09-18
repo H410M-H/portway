@@ -36,8 +36,8 @@ export async function executeDeployment(
   };
 
   try {
-    log(`[portway] Deployment initiated for service ${serviceId}`, "system");
-    log(`[portway] Target commit: ${commit} — "${message}"`, "system");
+    log(`[syncbay] Deployment initiated for service ${serviceId}`, "system");
+    log(`[syncbay] Target commit: ${commit} — "${message}"`, "system");
 
     // Phase 1: Update to BUILDING
     await db.build.update({
@@ -114,7 +114,7 @@ export async function executeDeployment(
       data: { status: "DEPLOYING" },
     }).catch(() => null);
 
-    log(`[deploy] Container image portway.internal/${serviceName}:${commit} built successfully`, "system");
+    log(`[deploy] Container image syncbay.internal/${serviceName}:${commit} built successfully`, "system");
     log(`[deploy] Provisioning runtime container on Cloudflare Container pool...`, "system");
 
     // Phase 3: Blue/Green Health Check Verification
@@ -137,7 +137,7 @@ export async function executeDeployment(
       data: { status: "ACTIVE" },
     }).catch(() => null);
 
-    log(`[portway] Deployment ${deploymentId} is ACTIVE and serving traffic 🚀`, "system");
+    log(`[syncbay] Deployment ${deploymentId} is ACTIVE and serving traffic 🚀`, "system");
 
     return { status: "ACTIVE", url: `https://${defaultUrl}` };
   } catch (error: any) {

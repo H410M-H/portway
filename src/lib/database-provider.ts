@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Managed Database Provider (R6 Core)
+ * Syncbay PaaS — Managed Database Provider (R6 Core)
  * Provisions, parses, and manages PostgreSQL, Redis/Valkey, and MySQL database instances.
  */
 
@@ -114,7 +114,7 @@ export async function provisionManagedDatabase(params: {
   if (!PARTNER_API_KEY) {
     const mockId = `pw-db-${provider.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
     const mockPass = Math.random().toString(36).substring(2, 14);
-    const mockHost = `${mockId}.${region}.portway-db.internal`;
+    const mockHost = `${mockId}.${region}.syncbay-db.internal`;
 
     let mockUrl = "";
     if (provider === "POSTGRES") {

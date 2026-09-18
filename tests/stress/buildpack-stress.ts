@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Adversarial Stress Test Suite: Buildpack Engine & Resolver
+ * Syncbay PaaS — Adversarial Stress Test Suite: Buildpack Engine & Resolver
  * Challenger 1 for Milestone M1
  *
  * Covers:
@@ -76,7 +76,7 @@ async function runTest(
 
 async function main() {
   console.log("================================================================================");
-  console.log("     PORTWAY PaaS — BUILDPACK & RESOLVER ADVERSARIAL STRESS SUITE              ");
+  console.log("     SYNCBAY PaaS — BUILDPACK & RESOLVER ADVERSARIAL STRESS SUITE              ");
   console.log("================================================================================\n");
 
   // =========================================================================
@@ -616,7 +616,7 @@ async function main() {
   await runTest("C6-04", "Missing", "Valid service with invalid property: ${{ WebSvc.INVALID_PROP }}", () => {
     const res = resolveEnvironmentVariables(
       [{ key: "BAD_SVC_PROP", value: "${{ WebSvc.INVALID_PROP }}" }],
-      { services: [{ name: "WebSvc", domain: "web.portway.app" }] }
+      { services: [{ name: "WebSvc", domain: "web.syncbay.app" }] }
     );
     assert.strictEqual(res[0].resolved, false);
     assert.ok(res[0].error?.includes("Unresolved reference"));

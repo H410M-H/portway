@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — GitHub Push & Ephemeral PR Previews Manager (F19, F20)
+ * Syncbay PaaS — GitHub Push & Ephemeral PR Previews Manager (F19, F20)
  * Handles GitHub push events, PR preview lifecycle (opened, synchronize, closed),
  * dynamic pr-<num> environment provisioning, variable cloning, and resource cleanup.
  */
@@ -85,7 +85,7 @@ export class PrPreviewManager {
     const prNumber = payload.number;
     const serviceName = options?.serviceName || "web";
     const projectId = options?.projectId || "proj_123";
-    const previewSubdomain = `${serviceName}-pr-${prNumber}.portway.app`;
+    const previewSubdomain = `${serviceName}-pr-${prNumber}.syncbay.app`;
 
     switch (payload.action) {
       case "opened":
@@ -109,7 +109,7 @@ export class PrPreviewManager {
         };
         this.environments.set(prNumber, env);
 
-        const commentBody = `### 🚀 Portway Ephemeral Preview Ready\n\nPreview URL: [https://${previewSubdomain}](https://${previewSubdomain})\nCommit: \`${payload.pull_request.head.sha.slice(0, 7)}\`\nStatus: **Active**`;
+        const commentBody = `### 🚀 Syncbay Ephemeral Preview Ready\n\nPreview URL: [https://${previewSubdomain}](https://${previewSubdomain})\nCommit: \`${payload.pull_request.head.sha.slice(0, 7)}\`\nStatus: **Active**`;
 
         return {
           action: payload.action,
@@ -129,7 +129,7 @@ export class PrPreviewManager {
           status: "ACTIVE",
         });
 
-        const commentBody = `### 🔄 Portway Ephemeral Preview Updated\n\nPreview URL: [${env.previewUrl}](${env.previewUrl})\nNew Commit: \`${payload.pull_request.head.sha.slice(0, 7)}\``;
+        const commentBody = `### 🔄 Syncbay Ephemeral Preview Updated\n\nPreview URL: [${env.previewUrl}](${env.previewUrl})\nNew Commit: \`${payload.pull_request.head.sha.slice(0, 7)}\``;
 
         return {
           action: "synchronize",

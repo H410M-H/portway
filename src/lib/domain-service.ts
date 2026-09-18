@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Domain & SSL Service (R5 Core)
+ * Syncbay PaaS — Domain & SSL Service (R5 Core)
  * Generates default subdomains, produces DNS verification records (CNAME & TXT),
  * and handles SSL certificate provisioning verification state machine.
  */
@@ -50,7 +50,7 @@ export function generateDefaultSubdomain(
   const base = `${serviceSlug}-${envSlug}`;
   const suffixPart = suffix ? `-${suffix}` : "";
 
-  return `${base}${suffixPart}.portway.app`;
+  return `${base}${suffixPart}.syncbay.app`;
 }
 
 /**
@@ -61,16 +61,16 @@ export function generateDefaultSubdomain(
 export function generateVerificationRecords(domain: string): VerificationRecords {
   const token = crypto
     .createHash("sha256")
-    .update(`portway-verify:${domain}:${process.env.NEXTAUTH_SECRET || "salt"}`)
+    .update(`syncbay-verify:${domain}:${process.env.NEXTAUTH_SECRET || "salt"}`)
     .digest("hex")
     .slice(0, 32);
 
   const cleanDomain = domain.toLowerCase().trim();
 
   return {
-    cnameTarget: "cname.portway.app",
-    txtRecord: `portway-verification=${token}`,
-    txtHost: `_portway-challenge.${cleanDomain}`,
+    cnameTarget: "cname.syncbay.app",
+    txtRecord: `syncbay-verification=${token}`,
+    txtHost: `_syncbay-challenge.${cleanDomain}`,
     cnameHost: cleanDomain,
   };
 }
@@ -89,7 +89,7 @@ export async function verifyDomain(domainId: string): Promise<DomainStatus> {
     throw new Error(`Domain not found: ${domainId}`);
   }
 
-  // Generated default subdomains are pre-provisioned with wildcard SSL (*.portway.app)
+  // Generated default subdomains are pre-provisioned with wildcard SSL (*.syncbay.app)
   if (domain.isGenerated) {
     if (domain.status !== "ACTIVE") {
       await db.domain.update({

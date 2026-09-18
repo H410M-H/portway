@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — API Access Tokens tRPC Router (F1, F2, F3)
+ * Syncbay PaaS — API Access Tokens tRPC Router (F1, F2, F3)
  * Manages developer API tokens with granular scopes (READ_ONLY, DEPLOY_ONLY, FULL_ACCESS).
  */
 

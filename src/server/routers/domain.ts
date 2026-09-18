@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Custom Domains & SSL tRPC Router (R5 Core)
+ * Syncbay PaaS — Custom Domains & SSL tRPC Router (R5 Core)
  * Handles custom domain registration, DNS verification checks (CNAME & TXT),
  * and SSL certificate lifecycle.
  */

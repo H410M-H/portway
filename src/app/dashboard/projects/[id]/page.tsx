@@ -1494,11 +1494,11 @@ function ProjectConsoleContent() {
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem" }}>
                                   <span className="badge badge-queued" style={{ fontSize: "0.625rem", padding: "1px 5px" }}>CNAME</span>
                                   <span style={{ color: "var(--text-muted)" }}>Target:</span>
-                                  <code style={{ color: "var(--brand-accent)", fontSize: "0.75rem" }}>cname.portway.app</code>
+                                  <code style={{ color: "var(--brand-accent)", fontSize: "0.75rem" }}>cname.syncbay.app</code>
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => copyToClipboard("cname.portway.app", `cname-${dom.id}`)}
+                                  onClick={() => copyToClipboard("cname.syncbay.app", `cname-${dom.id}`)}
                                   className="btn btn-ghost btn-xs"
                                   style={{ padding: "2px 8px", fontSize: "0.6875rem" }}
                                 >
@@ -1511,15 +1511,15 @@ function ProjectConsoleContent() {
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", borderTop: "1px solid var(--border-subtle)", paddingTop: "4px" }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", overflow: "hidden" }}>
                                     <span className="badge badge-sleeping" style={{ fontSize: "0.625rem", padding: "1px 5px" }}>TXT</span>
-                                    <code style={{ fontSize: "0.6875rem" }}>_portway-challenge.{dom.hostname}</code>
+                                    <code style={{ fontSize: "0.6875rem" }}>_syncbay-challenge.{dom.hostname}</code>
                                     <span style={{ color: "var(--text-muted)" }}>→</span>
                                     <code style={{ fontSize: "0.6875rem", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                      {dom.verificationTxt || "portway-verification=..."}
+                                      {dom.verificationTxt || "syncbay-verification=..."}
                                     </code>
                                   </div>
                                   <button
                                     type="button"
-                                    onClick={() => copyToClipboard(dom.verificationTxt || `_portway-challenge.${dom.hostname}`, `txt-${dom.id}`)}
+                                    onClick={() => copyToClipboard(dom.verificationTxt || `_syncbay-challenge.${dom.hostname}`, `txt-${dom.id}`)}
                                     className="btn btn-ghost btn-xs"
                                     style={{ padding: "2px 8px", fontSize: "0.6875rem" }}
                                   >
@@ -1627,7 +1627,7 @@ function ProjectConsoleContent() {
                 <span>💡</span>
                 <strong>Inter-Service Reference Syntax:</strong>
                 <span style={{ color: "var(--text-muted)" }}>
-                  Portway resolves references dynamically at container launch time. Click a chip to insert:
+                  Syncbay resolves references dynamically at container launch time. Click a chip to insert:
                 </span>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>

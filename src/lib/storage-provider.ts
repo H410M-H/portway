@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Object Storage Provider (R6 Core)
+ * Syncbay PaaS — Object Storage Provider (R6 Core)
  * Provisions S3 and Cloudflare R2 compatible storage buckets,
  * manages access credentials, and computes authentic SigV4 presigned URLs.
  */
@@ -25,7 +25,7 @@ export interface PresignedUrlParams {
   expiresInSeconds?: number;
 }
 
-const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || "portway-storage";
+const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || "syncbay-storage";
 const STORAGE_ACCESS_KEY = process.env.R2_ACCESS_KEY_ID || "pw_ak_" + crypto.randomBytes(8).toString("hex");
 const STORAGE_SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY || "pw_sk_" + crypto.randomBytes(16).toString("hex");
 

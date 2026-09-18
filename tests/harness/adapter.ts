@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Master Test Adapter
+ * Syncbay PaaS — Master Test Adapter
  * Bridges production code from `src/` with test oracles and harnesses.
  */
 

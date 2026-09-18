@@ -1,4 +1,4 @@
-# Test Readiness Declaration: Portway PaaS E2E Test Suite
+# Test Readiness Declaration: Syncbay PaaS E2E Test Suite
 
 **Date**: 2026-09-17  
 **Author**: E2E Testing Lead & Test Writer  

@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Tier 2: Boundary & Corner Cases Test Suite (F1 – F20)
+ * Syncbay PaaS — Tier 2: Boundary & Corner Cases Test Suite (F1 – F20)
  * 100 tests: Exactly 5 boundary, edge-case, and adversarial test cases per feature.
  */
 
@@ -117,7 +117,7 @@ registerTest("F3-T2-02", "F3", 2, "Revoked API token rejects all operations", as
 
 registerTest("F3-T2-03", "F3", 2, "User profile email update with invalid email format rejected", async () => {
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  assertTrue(isValidEmail("user@portway.dev"));
+  assertTrue(isValidEmail("user@syncbay.dev"));
   assertFalse(isValidEmail("invalid-email-address"));
   assertFalse(isValidEmail("user@"));
 });
@@ -608,7 +608,7 @@ registerTest("F13-T2-05", "F13", 2, "Multi-subscriber metric stream fan-out", as
 // =========================================================================
 registerTest("F14-T2-01", "F14", 2, "Subdomain with consecutive hyphens and symbols cleaned (RFC 1123)", async () => {
   const sub = adapter.generateDefaultSubdomain("---api---service###", "---prod---");
-  assertEqual(sub, "api-service-prod.portway.app");
+  assertEqual(sub, "api-service-prod.syncbay.app");
 });
 
 registerTest("F14-T2-02", "F14", 2, "Hostname exceeding 253 characters rejected by isValidHostname", async () => {
@@ -623,7 +623,7 @@ registerTest("F14-T2-03", "F14", 2, "Hostname with trailing dot or uppercase cha
 
 registerTest("F14-T2-04", "F14", 2, "Subdomain with empty service name falls back to default 'service'", async () => {
   const sub = adapter.generateDefaultSubdomain("", "");
-  assertEqual(sub, "service-production.portway.app");
+  assertEqual(sub, "service-production.syncbay.app");
 });
 
 registerTest("F14-T2-05", "F14", 2, "Custom domain with IP address format rejection", async () => {
@@ -638,17 +638,17 @@ registerTest("F15-T2-01", "F15", 2, "TXT record verification retry with mismatch
   const checkVerification = (expectedToken: string, actualDnsRecord: string) => {
     return actualDnsRecord.includes(expectedToken);
   };
-  assertFalse(checkVerification("token_abc123", "portway-verification=token_different"));
+  assertFalse(checkVerification("token_abc123", "syncbay-verification=token_different"));
 });
 
 registerTest("F15-T2-02", "F15", 2, "CNAME record pointing to wrong host leaves status PENDING/FAILED", async () => {
-  const checkCname = (actualCname: string) => actualCname === "cname.portway.app";
+  const checkCname = (actualCname: string) => actualCname === "cname.syncbay.app";
   assertFalse(checkCname("cname.competitor.com"));
 });
 
 registerTest("F15-T2-03", "F15", 2, "Verification token formatting has sufficient entropy (>= 16 chars)", async () => {
   const records = adapter.generateVerificationRecords("secure.app.io");
-  const token = records.txtRecord.replace("portway-verification=", "");
+  const token = records.txtRecord.replace("syncbay-verification=", "");
   assertTrue(token.length >= 16);
 });
 

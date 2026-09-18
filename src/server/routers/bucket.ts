@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Object Storage (Bucket) tRPC Router (R6 Core)
+ * Syncbay PaaS — Object Storage (Bucket) tRPC Router (R6 Core)
  * Handles S3/Cloudflare R2 bucket provisioning, access keys, and presigned URLs.
  */
 
@@ -32,7 +32,7 @@ export const bucketRouter = createTRPCRouter({
 
       return buckets.map((b) => ({
         ...b,
-        endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID || "portway-storage"}.r2.cloudflarestorage.com`,
+        endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID || "syncbay-storage"}.r2.cloudflarestorage.com`,
         publicUrl: `https://${b.r2BucketRef}.r2.dev`,
       }));
     }),

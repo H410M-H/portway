@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Deployment State Machine & Dual-Driver Reference Oracle (F9, F10, F11)
+ * Syncbay PaaS — Deployment State Machine & Dual-Driver Reference Oracle (F9, F10, F11)
  * Strictly verifies the deployment lifecycle state transitions, dual-driver execution,
  * health checks, and blue/green auto-rollback contracts from PROJECT.md and ORIGINAL_REQUEST.md.
  */
@@ -159,7 +159,7 @@ export class DeploymentStateMachine {
 
     // 2. BUILDING -> DEPLOYING
     this.transition(deploymentId, "DEPLOYING");
-    options?.onLog?.(`[Deploy] Activating container instances on portway cluster`);
+    options?.onLog?.(`[Deploy] Activating container instances on syncbay cluster`);
 
     // 3. Health Check Gate
     const health = await this.checkHealth(

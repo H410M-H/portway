@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Telemetry & Metrics tRPC Router (R4 Core)
+ * Syncbay PaaS — Telemetry & Metrics tRPC Router (R4 Core)
  * Supplies real-time container metrics telemetry, historical time-series aggregates,
  * and billing usage summaries for services and workspaces.
  */
@@ -90,7 +90,7 @@ export const metricsRouter = createTRPCRouter({
       }
 
       let serviceStatus = "ACTIVE";
-      let identifier = input.serviceId || input.deploymentId || "portway-service";
+      let identifier = input.serviceId || input.deploymentId || "syncbay-service";
 
       if (input.deploymentId) {
         const deployment = await ctx.db.deployment.findFirst({

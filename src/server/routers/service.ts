@@ -120,7 +120,7 @@ export const serviceRouter = createTRPCRouter({
         },
       });
 
-      // Automatically generate default domain <service>-<env>.portway.app
+      // Automatically generate default domain <service>-<env>.syncbay.app
       const defaultHostname = domainService.generateDefaultSubdomain(service.name, env.name);
       const existingDomain = await ctx.db.domain.findUnique({
         where: { hostname: defaultHostname },

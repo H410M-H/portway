@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Real-Time Log Console & Live Metrics Bus (F12, F13)
+ * Syncbay PaaS — Real-Time Log Console & Live Metrics Bus (F12, F13)
  * In-memory ring buffer event bus streaming build steps and container stdout/stderr
  * and telemetry metrics stream generator matching PROJECT.md interface contract.
  */

@@ -102,7 +102,7 @@ function NewServiceWizardContent() {
       if (deployImmediately) {
         await triggerDeployMutation.mutateAsync({
           serviceId: createdService.id,
-          commitMessage: "Initial deployment from Portway wizard",
+          commitMessage: "Initial deployment from Syncbay wizard",
         });
       }
 
@@ -126,7 +126,7 @@ function NewServiceWizardContent() {
         </Link>
         <h1 className="page-title">Create a New Service</h1>
         <p className="page-subtitle">
-          Configure a web application, API server, or background container to run on Portway.
+          Configure a web application, API server, or background container to run on Syncbay.
         </p>
       </div>
 

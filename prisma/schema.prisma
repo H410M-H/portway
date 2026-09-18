@@ -1,6 +1,6 @@
-// Portway — Control-Plane Database Schema
+// Syncbay — Control-Plane Database Schema
 // PRD §6 — v0.1 | MSNS-DEV™
-// This schema covers Portway's own metadata ONLY.
+// This schema covers Syncbay's own metadata ONLY.
 // Customer application data lives inside whatever the customer deploys.
 
 generator client {

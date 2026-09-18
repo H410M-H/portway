@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Buildpack Runtime Auto-Detection Engine (R2 Core)
+ * Syncbay PaaS — Buildpack Runtime Auto-Detection Engine (R2 Core)
  * Analyzes repository structure, file manifests, and lockfiles to identify
  * programming languages, frameworks, and optimal build/run commands.
  */

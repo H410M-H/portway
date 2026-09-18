@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Master E2E Test Runner
+ * Syncbay PaaS — Master E2E Test Runner
  * Executes all 4 tiers of opaque-box requirement tests across F1 to F20:
  * - Tier 1: Feature Coverage (>=5 per feature, 100 tests)
  * - Tier 2: Boundary & Corner Cases (>=5 per feature, 100 tests)
@@ -39,7 +39,7 @@ const TIER_TITLES: Record<number, string> = {
 async function runSuite() {
   const startTime = Date.now();
   console.log("================================================================================");
-  console.log("             PORTWAY PaaS — COMPREHENSIVE E2E TEST RUNNER                      ");
+  console.log("             SYNCBAY PaaS — COMPREHENSIVE E2E TEST RUNNER                      ");
   console.log("================================================================================");
   console.log(`Node: ${process.version} | Platform: ${process.platform} | Time: ${new Date().toISOString()}`);
   if (filterTier) console.log(`Filter: Tier ${filterTier}`);

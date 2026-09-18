@@ -1,5 +1,5 @@
 /**
- * Portway PaaS — Environment Variable & Reference Resolution Engine (R2 Core)
+ * Syncbay PaaS — Environment Variable & Reference Resolution Engine (R2 Core)
  * Resolves hierarchical variables and inter-resource references like:
  * - ${{ Postgres.URL }}, ${{ Postgres.HOST }}, ${{ Postgres.PORT }}, ${{ Postgres.PASSWORD }}
  * - ${{ ServiceName.URL }}, ${{ ServiceName.PORT }}

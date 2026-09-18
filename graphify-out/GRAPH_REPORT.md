@@ -1,4 +1,4 @@
-# Graph Report - portway  (2026-09-17)
+# Graph Report - syncbay  (2026-09-17)
 
 ## Corpus Check
 - cluster-only mode — file stats not available

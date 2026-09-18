@@ -315,7 +315,7 @@ export default function UsagePage() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
           <span style={{ fontSize: "24px" }}>💡</span>
-          <h4 style={{ fontSize: "1.05rem" }}>Portway Scale-to-Zero Architecture</h4>
+          <h4 style={{ fontSize: "1.05rem" }}>Syncbay Scale-to-Zero Architecture</h4>
         </div>
         <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
           Services with <code>scaleToZero: true</code> automatically power down to 0 active replicas when idle for

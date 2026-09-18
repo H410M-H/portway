@@ -16,7 +16,7 @@ export default function SignInPage() {
           <div className="logo-icon-lg">⚓</div>
           <div>
             <h1 style={{ fontSize: "1.75rem", marginBottom: "4px" }}>
-              Welcome to Portway
+              Welcome to Syncbay
             </h1>
             <p style={{ fontSize: "0.9rem", margin: 0 }}>
               Sign in to your account to continue

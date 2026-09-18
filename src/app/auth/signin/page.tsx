@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { SignInForm } from "./signin-form";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Sign In",
 };

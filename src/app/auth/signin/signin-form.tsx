@@ -2,15 +2,32 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+
+  const displayError =
+    error ||
+    (urlError === "OAuthSignin"
+      ? "Could not start GitHub login. Please check GitHub OAuth App credentials."
+      : urlError === "OAuthCallback"
+      ? "Error receiving response from GitHub. Please try again."
+      : urlError === "OAuthAccountNotLinked"
+      ? "An account with this email already exists with different sign-in credentials."
+      : urlError === "AccessDenied"
+      ? "Access was denied by GitHub."
+      : urlError
+      ? `Authentication error: ${urlError}`
+      : null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +78,7 @@ export function SignInForm() {
 
       <div className="divider-or">or</div>
 
-      {error && (
+      {displayError && (
         <div
           style={{
             background: "rgba(239, 68, 68, 0.15)",
@@ -73,7 +90,7 @@ export function SignInForm() {
             fontSize: "0.85rem",
           }}
         >
-          {error}
+          {displayError}
         </div>
       )}
 

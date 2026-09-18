@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SignInForm } from "./signin-form";
 
@@ -23,7 +24,9 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <SignInForm />
+        <Suspense fallback={<div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "0.85rem", padding: "16px" }}>Loading...</div>}>
+          <SignInForm />
+        </Suspense>
       </div>
     </main>
   );

@@ -67,13 +67,21 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user }) {
-      // Resolve the adapter-created record before creating related rows. OAuth
-      // providers may return a provider identifier while Prisma uses its own id.
-      const persistedUser = user.email
-        ? await db.user.findUnique({ where: { email: user.email } })
-        : null;
+      // The Prisma adapter has already persisted the OAuth user by this point.
+      // Prefer the adapter id and fall back to email for older accounts or
+      // providers that do not return an email address.
+      const persistedUser =
+        (user.id
+          ? await db.user.findUnique({ where: { id: user.id } })
+          : null) ??
+        (user.email
+          ? await db.user.findUnique({ where: { email: user.email } })
+          : null);
 
-      if (!persistedUser) return false;
+      if (!persistedUser) {
+        console.error("[v0] GitHub user was not persisted before sign-in");
+        return false;
+      }
       user.id = persistedUser.id;
 
       // Auto-create personal workspace on first sign-in — FR-AUTH-04

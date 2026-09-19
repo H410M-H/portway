@@ -66,11 +66,23 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user }) {
-      // The Prisma adapter has already persisted the OAuth user by this point.
-      // Prefer the adapter id and fall back to email for older accounts or
-      // providers that do not return an email address.
+    async signIn({ user, account }) {
+      // Resolve the user through the adapter-created account first. This is
+      // reliable even when GitHub does not return a public email address.
       const persistedUser =
+        (account?.provider && account.providerAccountId
+          ? (
+              await db.account.findUnique({
+                where: {
+                  provider_providerAccountId: {
+                    provider: account.provider,
+                    providerAccountId: account.providerAccountId,
+                  },
+                },
+                include: { user: true },
+              })
+            )?.user ?? null
+          : null) ??
         (user.id
           ? await db.user.findUnique({ where: { id: user.id } })
           : null) ??
@@ -79,7 +91,10 @@ export const authOptions: NextAuthOptions = {
           : null);
 
       if (!persistedUser) {
-        console.error("[v0] GitHub user was not persisted before sign-in");
+        console.error("[v0] OAuth user was not persisted before sign-in", {
+          provider: account?.provider,
+          providerAccountId: account?.providerAccountId,
+        });
         return false;
       }
       user.id = persistedUser.id;

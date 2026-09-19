@@ -30,7 +30,8 @@ export function LandingHero({ onThemeChange, activeTheme = "cyber" }: LandingHer
   };
 
   return (
-    <section className="relative z-10 pt-16 pb-20 px-4 max-w-7xl mx-auto flex flex-col items-center text-center">
+    <section className="relative z-10 pt-20 pb-24 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
+      <div className="absolute inset-x-10 top-8 -z-10 h-80 rounded-full bg-cyan-400/10 blur-3xl" aria-hidden="true" />
       {/* Top Banner Tag & ASCII Theme Switcher */}
       <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 backdrop-blur-md text-cyan-300 text-xs font-mono font-semibold">
@@ -60,7 +61,9 @@ export function LandingHero({ onThemeChange, activeTheme = "cyber" }: LandingHer
       </div>
 
       {/* Main Headline */}
-      <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white max-w-5xl leading-[1.08] mb-6 font-sans">
+      <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-300/80">Infrastructure, without the ceremony</p>
+
+      <h1 className="max-w-5xl text-4xl font-black tracking-[-0.04em] text-white leading-[1.02] sm:text-6xl md:text-8xl mb-7 font-sans">
         Deploy in Seconds. <br />
         <span className="bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent">
           The Edge Cloud Hyper-Plane.

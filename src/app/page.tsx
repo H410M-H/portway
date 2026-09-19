@@ -85,7 +85,7 @@ export default function HomePage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 space-y-28 pb-28">
+      <main className="relative z-10 space-y-36 pb-32">
         {/* Hero Section */}
         <LandingHero activeTheme={asciiTheme} onThemeChange={setAsciiTheme} />
 

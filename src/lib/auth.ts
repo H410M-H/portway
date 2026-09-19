@@ -100,15 +100,16 @@ export const authOptions: NextAuthOptions = {
       user.id = persistedUser.id;
 
       // Auto-create personal workspace on first sign-in — FR-AUTH-04
-      const existing = await db.workspace.findFirst({
-        where: {
-          members: { some: { userId: persistedUser.id } },
-          isPersonal: true,
-        },
-      });
-      if (!existing) {
-        const baseName = persistedUser.name ?? "user";
-        const slug = `${baseName
+      try {
+        const existing = await db.workspace.findFirst({
+          where: {
+            members: { some: { userId: persistedUser.id } },
+            isPersonal: true,
+          },
+        });
+        if (!existing) {
+          const baseName = persistedUser.name ?? "user";
+          const slug = `${baseName
           .toLowerCase()
           .replace(/\s+/g, "-")
           .replace(/[^a-z0-9-]/g, "")
@@ -129,14 +130,18 @@ export const authOptions: NextAuthOptions = {
         });
 
         // Append-only audit log — DR-04
-        await db.auditLogEntry.create({
-          data: {
-            workspaceId: workspace.id,
-            actorUserId: persistedUser.id,
-            action: "workspace.created",
-            metadata: { isPersonal: true },
-          },
-        });
+          await db.auditLogEntry.create({
+            data: {
+              workspaceId: workspace.id,
+              actorUserId: persistedUser.id,
+              action: "workspace.created",
+              metadata: { isPersonal: true },
+            },
+          });
+        }
+      } catch (error) {
+        // Workspace provisioning must not reject an otherwise valid OAuth login.
+        console.error("[v0] Personal workspace provisioning failed", error);
       }
 
       return true;

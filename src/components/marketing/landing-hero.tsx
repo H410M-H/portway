@@ -10,14 +10,14 @@ interface LandingHeroProps {
 
 const TERMINAL_LOGS = [
   { text: "$ syncbay up --project cloud-edge", color: "text-zinc-300", delay: 0 },
-  { text: "⚡ [syncbay] Analyzing repository structure...", color: "text-cyan-400", delay: 300 },
+  { text: "[syncbay] Analyzing repository structure...", color: "text-cyan-400", delay: 300 },
   { text: "✔ [nixpacks] Detected runtime: Node.js 20 (Next.js 16 App Router)", color: "text-emerald-400", delay: 700 },
   { text: "✔ [database] Attached Managed Postgres: ${{ Postgres.URL }}", color: "text-emerald-400", delay: 1100 },
-  { text: "🚀 [build] Ephemeral build container active (0 cold start)", color: "text-cyan-300", delay: 1500 },
+  { text: "[build] Ephemeral build container active (0 cold start)", color: "text-cyan-300", delay: 1500 },
   { text: "✔ [build] Container image pushed: registry.syncbay.edge/cloud-edge:v1", color: "text-emerald-400", delay: 2000 },
-  { text: "🌍 [deploy] Routing to 6 Edge POPs: [iad1, sfo1, fra1, lhr1, sin1, syd1]", color: "text-purple-400", delay: 2400 },
+  { text: "[deploy] Routing to 6 Edge POPs: [iad1, sfo1, fra1, lhr1, sin1, syd1]", color: "text-purple-400", delay: 2400 },
   { text: "✔ [healthcheck] HTTP /health passed (200 OK, 12ms)", color: "text-emerald-400", delay: 2800 },
-  { text: "✨ [active] Live at https://cloud-edge.syncbay.app", color: "text-yellow-300 font-bold", delay: 3200 },
+  { text: "[active] Live at https://cloud-edge.syncbay.app", color: "text-yellow-300 font-bold", delay: 3200 },
 ];
 
 export function LandingHero({ onThemeChange, activeTheme = "cyber" }: LandingHeroProps) {
@@ -81,7 +81,7 @@ export function LandingHero({ onThemeChange, activeTheme = "cyber" }: LandingHer
           href="/auth/signin"
           className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-sm shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:-translate-y-0.5"
         >
-          🚀 Launch Project in 30s (Free)
+          Launch Project in 30s (Free)
         </Link>
 
         <div className="flex items-center bg-black/80 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-mono text-zinc-300 shadow-xl">

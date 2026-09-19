@@ -30,8 +30,9 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-black/70 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-indigo-600 flex items-center justify-center text-black font-black text-sm shadow-[0_0_15px_rgba(6,182,212,0.5)] group-hover:scale-105 transition-transform">
-              ⚡
+            <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-cyan-300/40 bg-gradient-to-br from-cyan-300 via-fuchsia-500 to-indigo-600 text-black shadow-[0_0_24px_rgba(6,182,212,0.35)] transition-transform group-hover:scale-105">
+              <span className="absolute h-4 w-4 rotate-45 border-2 border-black/80" aria-hidden="true" />
+              <span className="absolute h-1.5 w-1.5 rounded-full bg-black" aria-hidden="true" />
             </div>
             <span className="font-extrabold text-lg tracking-tight text-white font-mono">
               SYNCBAY<span className="text-cyan-400">.APP</span>
@@ -40,7 +41,7 @@ export default function HomePage() {
 
           <nav className="hidden md:flex items-center space-x-6 text-xs text-zinc-400 font-medium">
             <Link href="/pricing" className="text-cyan-400 font-bold hover:text-white transition-colors">
-              Plans &amp; Pricing 💎
+              Plans &amp; Pricing
             </Link>
             <a href="#comparison" className="hover:text-white transition-colors">
               Compare Vercel &amp; Railway

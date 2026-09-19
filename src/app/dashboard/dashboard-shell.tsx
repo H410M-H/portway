@@ -178,6 +178,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
       "projects",
       "settings",
       "members",
+      "team",
       "usage",
       "audit",
       "services",
@@ -301,8 +302,10 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
             className="btn btn-ghost btn-sm"
             style={{
               display: "none",
-              padding: "6px 8px",
-              marginRight: "2px",
+              padding: "8px",
+              marginRight: "4px",
+              minWidth: "44px",
+              minHeight: "44px",
             }}
             id="mobile-nav-toggle"
             aria-label="Toggle Navigation Drawer"

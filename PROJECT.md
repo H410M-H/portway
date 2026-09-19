@@ -65,6 +65,7 @@ Syncbay is a high-performance, developer-centric Platform-as-a-Service (PaaS) bu
 | M5 | Multi-Region Edge Networking & Cloud Container Proxy | 6 Tier-1 global POPs, latency routing, automated failover cascade, TLS 1.3/HTTP3 | M1-M4 | COMPLETED ✔ |
 | M6 | Syncbay Developer CLI (`syncbay`) & Public OpenAPI Platform | Standalone CLI, `syncbay.json` manifest engine, GitHub Actions deploy step, `/api/v1/*` OpenAPI 3.1 platform | M1-M4 | COMPLETED ✔ |
 | M7 | Interactive Web Shell & Database Query Studio | VT100 web terminal connecting to container environment, embedded SQL & Redis query studio with schema browser | M1-M4 | COMPLETED ✔ |
+| M8 | DevOps Hyper-Plane, WAF, Crons, Canary, Responsive Sidebar & Plans | Automated scheduled crons, Edge WAF & rate limiter, canary traffic shifting, auto-tuner, AI deploy diagnoser, collapsible sidebar & mobile drawer, RBAC, competitor pricing matrix, and American company compliance | M1-M7 | COMPLETED ✔ |
 
 ## Interface Contracts
 

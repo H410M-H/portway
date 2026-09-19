@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { trpc } from "@/lib/trpc-client";
 import { ApiTokenScope } from "@prisma/client";
 import { useDashboard } from "../dashboard-shell";
@@ -450,6 +451,62 @@ export default function SettingsPage() {
             {updateCapMutation.isPending ? "Saving..." : "Save Spending Cap"}
           </button>
         </form>
+      </div>
+
+      {/* ── Official American Company & Cloud Compliance Card ── */}
+      <div className="card" style={{ marginBottom: "28px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "20px" }}>🇺🇸</span>
+            <h3 style={{ margin: 0 }}>Corporate Identity &amp; US Compliance</h3>
+          </div>
+          <span className="badge badge-active" style={{ fontSize: "0.7rem" }}>
+            US Infrastructure
+          </span>
+        </div>
+
+        <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "16px" }}>
+          Syncbay is an American cloud platform operated by <strong>Syncbay Technologies Inc.</strong> All control-plane
+          metadata, database instances, and user access policies are protected under United States data privacy and SOC2
+          regulatory standards.
+        </p>
+
+        <div className="grid-2" style={{ gap: "12px", marginBottom: "16px" }}>
+          <div style={{ padding: "12px", background: "var(--bg-overlay)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+              Corporate Headquarters
+            </div>
+            <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--text-primary)" }}>
+              Syncbay Technologies Inc.
+            </div>
+            <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+              100 Montgomery St, Suite 1400<br />
+              San Francisco, CA 94104, United States
+            </div>
+          </div>
+
+          <div style={{ padding: "12px", background: "var(--bg-overlay)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+              Legal Jurisdiction &amp; Governance
+            </div>
+            <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--text-primary)" }}>
+              State of Delaware (C-Corp)
+            </div>
+            <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+              US Data Sovereignty · Cloudflare Edge Backbone<br />
+              Zero-Cloud-Tax Guarantee
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <Link href="/pricing" className="btn btn-secondary btn-sm">
+            💎 View Plans &amp; Competitor Comparison
+          </Link>
+          <a href="mailto:compliance@syncbay.app" className="btn btn-ghost btn-sm" style={{ color: "var(--text-muted)" }}>
+            Request Compliance Packet ↗
+          </a>
+        </div>
       </div>
 
       {/* Create Token Modal */}

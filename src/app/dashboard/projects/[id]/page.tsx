@@ -9,6 +9,7 @@ import { EdgeProxyConsole } from "@/components/dashboard/edge-proxy-console";
 import { CliManifestConsole } from "@/components/dashboard/cli-manifest-console";
 import { WebShell } from "@/components/dashboard/web-shell";
 import { QueryStudio } from "@/components/dashboard/query-studio";
+import { DevOpsSuite } from "@/components/dashboard/devops-suite";
 
 type ConsoleTab =
   | "services"
@@ -21,6 +22,7 @@ type ConsoleTab =
   | "cli-deploy"
   | "shell"
   | "query-studio"
+  | "devops"
   | "settings";
 
 function ProjectConsoleContent() {
@@ -649,6 +651,7 @@ function ProjectConsoleContent() {
             { id: "cli-deploy", label: "CLI & Manifest (M6)", icon: "💻" },
             { id: "shell", label: "Container Shell (M7)", icon: "📟" },
             { id: "query-studio", label: "Query Studio (M7)", icon: "🗄️" },
+            { id: "devops", label: "DevOps & WAF Suite", icon: "🛠️" },
             { id: "settings", label: "Settings & Variables", icon: "⚙️" },
           ] as { id: ConsoleTab; label: string; icon: string }[]
         ).map((t) => (
@@ -1592,6 +1595,15 @@ function ProjectConsoleContent() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          DEVOPS & WAF SUITE (Crons, WAF, Canary, AI Diagnoser, Auto-Tuner)
+      ════════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "devops" && activeService && (
+        <div style={{ marginBottom: "28px" }}>
+          <DevOpsSuite serviceId={activeService.id} projectId={project.id} />
         </div>
       )}
 

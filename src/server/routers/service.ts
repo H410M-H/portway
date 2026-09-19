@@ -95,13 +95,13 @@ export const serviceRouter = createTRPCRouter({
           project: {
             deletedAt: null,
             workspace: {
-              members: { some: { userId: ctx.session.user.id } },
+              members: { some: { userId: ctx.session.user.id, role: { in: ["OWNER", "MEMBER"] } } },
             },
           },
         },
         include: { project: true },
       });
-      if (!env) throw new TRPCError({ code: "NOT_FOUND", message: "Environment not found" });
+      if (!env) throw new TRPCError({ code: "NOT_FOUND", message: "Environment not found or insufficient permissions" });
 
       const service = await ctx.db.service.create({
         data: {
@@ -166,7 +166,7 @@ export const serviceRouter = createTRPCRouter({
           deletedAt: null,
           environment: {
             project: {
-              workspace: { members: { some: { userId: ctx.session.user.id } } },
+              workspace: { members: { some: { userId: ctx.session.user.id, role: { in: ["OWNER", "MEMBER"] } } } },
             },
           },
         },
@@ -199,7 +199,7 @@ export const serviceRouter = createTRPCRouter({
           deletedAt: null,
           environment: {
             project: {
-              workspace: { members: { some: { userId: ctx.session.user.id } } },
+              workspace: { members: { some: { userId: ctx.session.user.id, role: { in: ["OWNER", "MEMBER"] } } } },
             },
           },
         },
@@ -229,7 +229,7 @@ export const serviceRouter = createTRPCRouter({
           deletedAt: null,
           environment: {
             project: {
-              workspace: { members: { some: { userId: ctx.session.user.id } } },
+              workspace: { members: { some: { userId: ctx.session.user.id, role: { in: ["OWNER", "MEMBER"] } } } },
             },
           },
         },

@@ -39,8 +39,11 @@ export default function HomePage() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6 text-xs text-zinc-400 font-medium">
+            <Link href="/pricing" className="text-cyan-400 font-bold hover:text-white transition-colors">
+              Plans &amp; Pricing 💎
+            </Link>
             <a href="#comparison" className="hover:text-white transition-colors">
-              Compare Vercel & Railway
+              Compare Vercel &amp; Railway
             </a>
             <a href="#latency" className="hover:text-white transition-colors">
               Global Edge POPs
@@ -196,13 +199,21 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-zinc-900 bg-black/90 py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-zinc-500 font-mono">
-          <div className="flex items-center space-x-2">
-            <span className="text-white font-bold">SYNCBAY</span>
-            <span>• The Edge Cloud Platform</span>
-            <span>• MSNS-DEV™</span>
+          <div className="flex flex-col gap-1 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start space-x-2">
+              <span className="text-white font-bold">SYNCBAY TECHNOLOGIES INC.</span>
+              <span>• San Francisco, CA, USA 🇺🇸</span>
+              <span>• MSNS-DEV™</span>
+            </div>
+            <div className="text-[11px] text-zinc-600">
+              100 Montgomery St, Suite 1400, San Francisco, CA 94104 · Incorporated in Delaware, USA · Tier-1 American Cloud Infrastructure
+            </div>
           </div>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/pricing" className="text-cyan-400 hover:text-white transition-colors">
+              Plans &amp; Pricing
+            </Link>
             <Link href="/auth/signin" className="hover:text-zinc-300 transition-colors">
               Console Sign In
             </Link>
@@ -220,7 +231,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* SEO Schema.org JSON-LD */}
+      {/* SEO Schema.org JSON-LD with Official American Company Location */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -234,6 +245,19 @@ export default function HomePage() {
               "@type": "Offer",
               price: "0.00",
               priceCurrency: "USD",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Syncbay Technologies Inc.",
+              url: "https://www.syncbay.app",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: "100 Montgomery St, Suite 1400",
+                addressLocality: "San Francisco",
+                addressRegion: "CA",
+                postalCode: "94104",
+                addressCountry: "US",
+              },
             },
             description:
               "The Cloud Hyper-Plane for Modern Developers. Next-Gen PaaS with 6 global edge POPs, managed PostgreSQL, web shell, and SQL Query Studio.",

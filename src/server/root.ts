@@ -13,6 +13,7 @@ import { tokenRouter } from "@/server/routers/token";
 import { edgeRouter } from "@/server/routers/edge";
 import { shellRouter } from "@/server/routers/shell";
 import { queryStudioRouter } from "@/server/routers/query-studio";
+import { devopsRouter } from "@/server/routers/devops";
 
 /**
  * Root tRPC router — all sub-routers are merged here.
@@ -33,6 +34,7 @@ export const appRouter = createTRPCRouter({
   edge: edgeRouter,
   shell: shellRouter,
   queryStudio: queryStudioRouter,
+  devops: devopsRouter,
 });
 
 export type AppRouter = typeof appRouter;

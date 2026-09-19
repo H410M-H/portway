@@ -81,6 +81,40 @@ export default function UsagePage() {
         )}
       </div>
 
+      {/* ── Plans & Fair Value Banner ── */}
+      <div
+        className="card"
+        style={{
+          marginBottom: "24px",
+          background: "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(6,182,212,0.12))",
+          borderColor: "var(--border-emphasis)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
+        }}
+      >
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+            <span style={{ fontSize: "20px" }}>💎</span>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0 }}>
+              Syncbay Fair Value Cloud Guarantee
+            </h3>
+            <span className="badge badge-active" style={{ fontSize: "0.65rem" }}>
+              Zero Seat Tax
+            </span>
+          </div>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", margin: 0 }}>
+            Save $1,200+/yr vs Vercel Pro and avoid Railway compute markups. 5 team seats included free on Pro ($10-$12/mo).
+          </p>
+        </div>
+
+        <Link href="/pricing" className="btn btn-primary btn-sm">
+          Compare All Plans &amp; Tiers →
+        </Link>
+      </div>
+
       {/* ── Spending Cap Gauge Card with 80% Alert Threshold ── */}
       <div
         className="card"

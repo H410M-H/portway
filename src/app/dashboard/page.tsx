@@ -2,14 +2,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+
+  if (!userId) redirect("/auth/signin");
 
   // Load workspaces for the current user
   const workspaces = await db.workspace.findMany({
     where: {
-      members: { some: { userId: session!.user!.id } },
+      members: { some: { userId } },
     },
     include: {
       _count: { select: { projects: true } },
@@ -26,7 +30,7 @@ export default async function DashboardPage() {
         environment: {
           project: {
             workspace: {
-              members: { some: { userId: session!.user!.id } },
+              members: { some: { userId } },
             },
           },
         },

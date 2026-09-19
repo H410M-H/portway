@@ -18,6 +18,7 @@ import {
 
 import { enterpriseHarness } from "../harness/enterprise-harness";
 import { authOptions } from "../../src/lib/auth";
+import { db } from "../../src/lib/db";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -114,6 +115,41 @@ registerTest("F02-T1-05", "F02", 1, "OAuth callback with invite token redirect r
     callbackUrl: invitePath,
   });
   assertEqual(result.redirectUrl, invitePath);
+});
+
+registerTest("F02-T1-06", "F02", 1, "First-time GitHub OAuth sign-in is allowed before adapter persistence exists", async () => {
+  const signIn = authOptions.callbacks?.signIn;
+  assertTrue(typeof signIn === "function", "signIn callback must exist");
+
+  const prismaLike = db as any;
+  const originalUserFindUnique = prismaLike.user.findUnique;
+  const originalAccountFindUnique = prismaLike.account.findUnique;
+
+  prismaLike.user.findUnique = async () => null;
+  prismaLike.account.findUnique = async () => null;
+
+  try {
+    const result = await signIn!({
+      user: {
+        id: "",
+        email: "new-oauth-user@example.com",
+        name: "New OAuth User",
+      },
+      account: {
+        provider: "github",
+        providerAccountId: "46568247",
+        type: "oauth",
+      },
+      profile: {},
+      email: { verificationRequest: false },
+      credentials: undefined,
+    } as any);
+
+    assertTrue(result === true, "first-time OAuth sign-in should proceed while the record is being created");
+  } finally {
+    prismaLike.user.findUnique = originalUserFindUnique;
+    prismaLike.account.findUnique = originalAccountFindUnique;
+  }
 });
 
 // ─── F03: TypeScript & Build Compilation Unblock ────────────────────────────

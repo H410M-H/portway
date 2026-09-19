@@ -67,8 +67,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }) {
-      // Resolve the user through the adapter-created account first. This is
-      // reliable even when GitHub does not return a public email address.
+      // Auth.js may invoke this callback before the Prisma adapter has inserted the
+      // OAuth user/account row. In that phase, a lookup by provider+account ID can
+      // legitimately be empty, so we should allow the login to continue and let the
+      // adapter complete the persistence flow.
       const persistedUser =
         (account?.provider && account.providerAccountId
           ? (
@@ -91,6 +93,19 @@ export const authOptions: NextAuthOptions = {
           : null);
 
       if (!persistedUser) {
+        const hasOAuthIdentity = Boolean(
+          account?.provider && account?.providerAccountId
+        );
+
+        if (hasOAuthIdentity) {
+          console.warn("[v0] OAuth user not yet persisted; allowing sign-in to continue", {
+            provider: account?.provider,
+            providerAccountId: account?.providerAccountId,
+            email: user.email,
+          });
+          return true;
+        }
+
         console.error("[v0] OAuth user was not persisted before sign-in", {
           provider: account?.provider,
           providerAccountId: account?.providerAccountId,
@@ -110,26 +125,26 @@ export const authOptions: NextAuthOptions = {
         if (!existing) {
           const baseName = persistedUser.name ?? "user";
           const slug = `${baseName
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, "")
-          .slice(0, 24)}-${persistedUser.id.slice(0, 6)}`;
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "")
+            .slice(0, 24)}-${persistedUser.id.slice(0, 6)}`;
 
-        const workspace = await db.workspace.create({
-          data: {
-            name: persistedUser.name ?? "My Workspace",
-            slug,
-            isPersonal: true,
-            members: {
-              create: {
-                user: { connect: { id: persistedUser.id } },
-                role: "OWNER",
+          const workspace = await db.workspace.create({
+            data: {
+              name: persistedUser.name ?? "My Workspace",
+              slug,
+              isPersonal: true,
+              members: {
+                create: {
+                  user: { connect: { id: persistedUser.id } },
+                  role: "OWNER",
+                },
               },
             },
-          },
-        });
+          });
 
-        // Append-only audit log — DR-04
+          // Append-only audit log — DR-04
           await db.auditLogEntry.create({
             data: {
               workspaceId: workspace.id,

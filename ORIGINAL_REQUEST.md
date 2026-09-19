@@ -65,3 +65,64 @@ Integrity mode: demo
 - [ ] `npx tsc --noEmit` passes with 0 TypeScript compilation errors.
 - [ ] `npm run build` succeeds cleanly.
 - [ ] Existing database tables and schema remain consistent with `prisma/schema.prisma`.
+
+## 2026-09-19T09:21:38Z
+
+Comprehensive enterprise upgrade for Syncbay PaaS (https://www.syncbay.app): resolve GitHub OAuth RFC 9207 callback error, implement modern automated collapsible sidebar with complete mobile responsiveness across all dashboard views, full RBAC workspace invitation workflows, hyper-competitive multi-tier pricing engine, official US corporate identity, and automated DevOps capabilities exceeding Vercel and Railway.
+
+Working directory: /data/data/com.termux/files/home/portway
+Integrity mode: development
+
+## Requirements
+
+### R1. Authentication & OAuth Handshake Hardening
+Resolve the [next-auth][error][OAUTH_CALLBACK_ERROR] (issuer must be configured on the issuer) by setting issuer: "https://github.com/login/oauth" on GitHubProvider to adhere to RFC 9207. Ensure seamless OAuth account linking, workspace auto-provisioning, and error-resilient callbacks in production.
+
+### R2. Modern Collapsible Sidebar & Universal Mobile Responsiveness
+Implement a high-polish, responsive navigation system:
+- Desktop/Tablet: Automate collapsible states (expanded full icons+labels, collapsed icon-only with tooltips), with user preference persistence via localStorage.
+- Mobile: Integrated hamburger drawer with slide-out sheet navigation, active route highlights, touch-optimized tap targets, and zero horizontal scroll overflow across all dashboard routes (/dashboard, /dashboard/projects, /dashboard/databases, /dashboard/settings, /dashboard/team).
+
+### R3. Workspace RBAC & Team Member Invitations
+Implement full collaborative team management:
+- Workspace invitations dialog supporting role assignment (OWNER, ADMIN, MEMBER, VIEWER).
+- Invitation token generation, secure invite links (/invite/[token]), acceptance workflows, and audit log events.
+- Workspace member management table with role changing, revocation, and permission enforcement across destructive actions.
+
+### R4. Competitive Plans & Pricing Engine
+Design and implement an industry-leading pricing page (/pricing) and dashboard billing management:
+- Hobby ($0/mo): Free edge deployments, shared compute, 1 managed DB instance, community support.
+- Pro ($18/mo): 0ms cold starts, attached managed PostgreSQL + Redis cache, 6 global edge POPs, unlimited team members, custom domains with auto-SSL.
+- Enterprise ($450/mo): Dedicated POP clusters, SLA guarantees, audit log streaming, 24/7 DevOps engineer support.
+- Direct side-by-side feature comparison table with Vercel and Railway showing Syncbay's superior price-to-performance ratio.
+
+### R5. Official US Corporate Identity & Legal Footer
+Establish official Syncbay corporate branding across marketing and legal touchpoints:
+- Headquarters: Syncbay Technologies Inc., 548 Market St, Suite 82194, San Francisco, CA 94104, United States.
+- Updated metadata, OpenGraph tags, footer copy, and legal contact disclosures.
+
+### R6. Advanced DevOps Capabilities & Production Delivery
+Analyze Vercel CLI features and incorporate superior automation:
+- One-click instant deployment rollback, environment variable synchronization, and edge cache purging.
+- Execute full test suite verification and deploy directly to Vercel production with end-to-end smoke testing.
+
+## Acceptance Criteria
+
+### Authentication
+- [ ] GitHub OAuth sign-in redirects to /dashboard without OAuthCallback or issuer must be configured on the issuer errors.
+
+### UI & Navigation
+- [ ] Sidebar collapses/expands smoothly with tooltip indicators in collapsed state.
+- [ ] Mobile navigation renders cleanly on viewports under 768px with full access to all project routes and settings.
+
+### Team & RBAC
+- [ ] Team members can be invited via email with designated roles and accept invitations via unique secure URLs.
+- [ ] Non-admin members are restricted from deleting projects or modifying billing.
+
+### Pricing & Positioning
+- [ ] Public /pricing route displays interactive tier selectors and comparison matrix against Vercel and Railway.
+- [ ] Footer and metadata display official US corporate presence.
+
+### Production Validation
+- [ ] All unit and E2E tests pass (npm test).
+- [ ] Production deployment builds cleanly and verifies live on https://www.syncbay.app.

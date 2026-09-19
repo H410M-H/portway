@@ -103,9 +103,29 @@ export function evaluateCanaryHealth(
   incomingErrors5xx: number = 0,
   incomingRequests: number = 100
 ): { action: "MAINTAIN" | "ROLLBACK" | "PROMOTE"; errorRatePercent: number; reason: string } {
-  config.canary5xxErrors += incomingErrors5xx;
-  config.canaryRequestsRouted += incomingRequests;
-  config.totalRequestsRouted += incomingRequests;
+  // Sticky circuit breaker: if already tripped, remain rolled back until explicit re-weighting
+  if (config.status === "ROLLED_BACK") {
+    return {
+      action: "ROLLBACK",
+      errorRatePercent: config.lastHealthEvaluation?.canary5xxRatePercent ?? 0,
+      reason: "Canary deployment is already in ROLLED_BACK circuit-breaker state. Reset weight to retry.",
+    };
+  }
+
+  if (config.status === "PROMOTED") {
+    return {
+      action: "PROMOTE",
+      errorRatePercent: 0,
+      reason: "Canary has already been promoted to 100% production.",
+    };
+  }
+
+  const safeErrors = Math.max(0, incomingErrors5xx);
+  const safeRequests = Math.max(safeErrors, incomingRequests);
+
+  config.canary5xxErrors += safeErrors;
+  config.canaryRequestsRouted += safeRequests;
+  config.totalRequestsRouted += safeRequests;
 
   const errorRatePercent =
     config.canaryRequestsRouted > 0

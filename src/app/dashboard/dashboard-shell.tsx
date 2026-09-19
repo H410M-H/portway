@@ -108,6 +108,47 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Lock body scroll and handle Escape key when mobile drawer or modals are open
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (mobileOpen || inviteModalOpen || createModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setInviteModalOpen(false);
+        setCreateModalOpen(false);
+        setTopbarDropdownOpen(false);
+        setSidebarDropdownOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileOpen, inviteModalOpen, createModalOpen]);
+
+  // Touch swipe to close mobile drawer
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diffX = touchStartX.current - e.changedTouches[0].clientX;
+    if (diffX > 50) {
+      // Swiped left by 50px
+      setMobileOpen(false);
+    }
+    touchStartX.current = null;
+  };
+
   // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -575,7 +616,10 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
               )}
             </div>
           ) : (
-            <div style={{ position: "relative", marginBottom: "12px", width: "100%", display: "flex", justifyContent: "center" }}>
+            <div
+              style={{ position: "relative", marginBottom: "12px", width: "100%", display: "flex", justifyContent: "center" }}
+              ref={sidebarDropdownRef}
+            >
               <button
                 onClick={() => setSidebarDropdownOpen(!sidebarDropdownOpen)}
                 className="btn btn-secondary btn-sm"
@@ -592,6 +636,83 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
               >
                 {currentWorkspace?.isPersonal ? "👤" : "🏢"}
               </button>
+
+              {sidebarDropdownOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: "calc(100% + 8px)",
+                    width: "240px",
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border-default)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "var(--shadow-lg)",
+                    padding: "8px",
+                    zIndex: 1000,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      color: "var(--text-muted)",
+                      padding: "4px 8px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Select Workspace
+                  </div>
+
+                  {workspaces?.map((ws) => (
+                    <button
+                      key={ws.id}
+                      onClick={() => handleSelectWorkspace(ws)}
+                      className="btn btn-ghost btn-sm"
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 10px",
+                        borderRadius: "var(--radius-sm)",
+                        background: ws.id === currentWorkspace?.id ? "rgba(99,102,241,0.15)" : "transparent",
+                        color: ws.id === currentWorkspace?.id ? "var(--brand-primary)" : "var(--text-primary)",
+                      }}
+                    >
+                      <span style={{ fontWeight: ws.id === currentWorkspace?.id ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {ws.name}
+                      </span>
+                      {ws.id === currentWorkspace?.id && <span style={{ fontSize: "12px" }}>✓</span>}
+                    </button>
+                  ))}
+
+                  <div style={{ height: "1px", background: "var(--border-subtle)", margin: "4px 0" }} />
+
+                  <button
+                    onClick={() => {
+                      setSidebarDropdownOpen(false);
+                      setCreateModalOpen(true);
+                    }}
+                    className="btn btn-ghost btn-sm"
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      color: "var(--brand-primary)",
+                      justifyContent: "flex-start",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <span>＋</span> Create Team Workspace
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -725,7 +846,11 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
           className={`mobile-drawer-overlay ${mobileOpen ? "active" : ""}`}
           onClick={() => setMobileOpen(false)}
         />
-        <div className={`mobile-drawer ${mobileOpen ? "active" : ""}`}>
+        <div
+          className={`mobile-drawer ${mobileOpen ? "active" : ""}`}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid var(--border-subtle)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div className="logo-icon" style={{ width: "28px", height: "28px", fontSize: "14px" }}>⚡</div>
@@ -735,54 +860,79 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
               onClick={() => setMobileOpen(false)}
               className="btn btn-ghost btn-sm"
               style={{ fontSize: "1.2rem", padding: "4px 8px" }}
+              aria-label="Close Navigation"
             >
               ✕
             </button>
           </div>
 
           <div style={{ marginBottom: "16px" }}>
-            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "6px" }}>
               Current Workspace
             </div>
-            <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>
-              {currentWorkspace?.name} ({currentWorkspace?.isPersonal ? "Personal" : "Team"})
-            </div>
+            {workspaces && workspaces.length > 1 ? (
+              <select
+                className="input"
+                style={{ width: "100%", padding: "6px 10px", fontSize: "0.8125rem" }}
+                value={currentWorkspace?.id || ""}
+                onChange={(e) => {
+                  const targetWs = workspaces.find((w) => w.id === e.target.value);
+                  if (targetWs) handleSelectWorkspace(targetWs);
+                }}
+              >
+                {workspaces.map((ws) => (
+                  <option key={ws.id} value={ws.id}>
+                    {ws.name} ({ws.isPersonal ? "Personal" : "Team"})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.875rem" }}>
+                {currentWorkspace?.name} ({currentWorkspace?.isPersonal ? "Personal" : "Team"})
+              </div>
+            )}
           </div>
 
           <span className="nav-section-label">Navigation</span>
-          <Link href="/dashboard" className="nav-item">
+          <Link href="/dashboard" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">⬡</span> Overview
           </Link>
-          <Link href="/dashboard/projects" className="nav-item">
+          <Link href="/dashboard/projects" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">◫</span> Projects
           </Link>
-          <Link href="/dashboard/settings" className="nav-item">
+          <Link href="/dashboard/shell" className="nav-item" onClick={() => setMobileOpen(false)}>
+            <span className="nav-icon">💻</span> Web Shell
+          </Link>
+          <Link href="/dashboard/studio" className="nav-item" onClick={() => setMobileOpen(false)}>
+            <span className="nav-icon">📊</span> Query Studio
+          </Link>
+          <Link href="/dashboard/settings" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">⚙</span> Settings
           </Link>
-          <Link href="/dashboard/members" className="nav-item">
+          <Link href="/dashboard/members" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">◎</span> Members
           </Link>
-          <Link href="/dashboard/usage" className="nav-item">
+          <Link href="/dashboard/usage" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">⬟</span> Usage &amp; Billing
           </Link>
-          <Link href="/dashboard/audit" className="nav-item">
+          <Link href="/dashboard/audit" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">⊟</span> Audit Log
           </Link>
-          <Link href="/pricing" className="nav-item">
+          <Link href="/pricing" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">💎</span> Plans &amp; Pricing
           </Link>
 
           <span className="nav-section-label" style={{ marginTop: "12px" }}>Create</span>
-          <Link href="/dashboard/projects/new" className="nav-item">
+          <Link href="/dashboard/projects/new" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">＋</span> New Project
           </Link>
-          <Link href="/dashboard/services/new" className="nav-item">
+          <Link href="/dashboard/services/new" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">⚡</span> New Service
           </Link>
-          <Link href="/dashboard/databases/new" className="nav-item">
+          <Link href="/dashboard/databases/new" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">🐘</span> New Database
           </Link>
-          <Link href="/dashboard/buckets/new" className="nav-item">
+          <Link href="/dashboard/buckets/new" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">🪣</span> New Bucket
           </Link>
 

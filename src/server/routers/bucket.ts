@@ -86,7 +86,14 @@ export const bucketRouter = createTRPCRouter({
         where: {
           id: input.projectId,
           deletedAt: null,
-          workspace: { members: { some: { userId: ctx.session.user.id } } },
+          workspace: {
+            members: {
+              some: {
+                userId: ctx.session.user.id,
+                role: { in: ["OWNER", "MEMBER"] },
+              },
+            },
+          },
         },
       });
 

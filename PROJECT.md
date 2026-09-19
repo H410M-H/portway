@@ -1,162 +1,79 @@
-# Project: Syncbay PaaS
+# Project: Syncbay PaaS Enterprise Upgrade
 
 ## Architecture
-Syncbay is a high-performance, developer-centric Platform-as-a-Service (PaaS) built with Next.js 16 (App Router), React 19, TypeScript, tRPC, and Prisma ORM.
-
-```
-                  ┌─────────────────────────────────────────────────────────┐
-                  │                      Client Layer                       │
-                  │   /dashboard/[slug]      /dashboard/projects/[id]       │
-                  │   Workspace Console      7-Tab Resource Console         │
-                  │   /dashboard/settings    Resource Creation Flows        │
-                  └──────────────┬──────────────────────────┬───────────────┘
-                                 │ HTTP / tRPC              │ SSE Streams
-                                 ▼                          ▼
-                  ┌─────────────────────────────────────────────────────────┐
-                  │                    Server Control Plane                 │
-                  │  tRPC Routers: workspace, project, service, deployment, │
-                  │               database, bucket, domain, volume, metrics │
-                  │  SSE Handlers: /api/deployments/[id]/logs/stream        │
-                  │               /api/deployments/[id]/metrics/stream      │
-                  │  Webhooks:    /api/webhooks/github (push & PR preview)  │
-                  └──────────────┬──────────────────────────┬───────────────┘
-                                 │                          │
-            ┌────────────────────┴────────┐        ┌────────┴─────────────────┐
-            │   Core Runtime & Infra      │        │       Data Layer         │
-            │  - Buildpack Engine         │        │  - PostgreSQL (Prisma)   │
-            │  - Dual-Driver Orchestrator │        │  - Managed DB Generator  │
-            │  - Blue/Green Health Checks │        │  - S3/R2 Storage & URLs  │
-            │  - Event Bus & Telemetry    │        │  - Domain & SSL Manager  │
-            │  - PR Preview Manager       │        │                          │
-            └─────────────────────────────┘        └──────────────────────────┘
-```
+Syncbay is a Railway/Vercel-class PaaS built with Next.js 14 (App Router), TypeScript, Tailwind CSS, tRPC, NextAuth v4, Prisma ORM (SQLite for local/edge simulation), and an edge-compatible deployment orchestrator.
+- **Frontend Layer**: Next.js App Router (`src/app`), server and client components, Lucide icons, Tailwind design system, responsive mobile drawer navigation, collapsible sidebar.
+- **API & RPC Layer**: tRPC router (`src/server/routers/`) with procedures for projects, deployments, services, databases, workspaces, members, invitations, and DevOps operations. NextAuth handlers in `src/app/api/auth/[...nextauth]`.
+- **Database & RBAC Layer**: Prisma schema (`prisma/schema.prisma`) defining `User`, `Account`, `Session`, `Workspace`, `WorkspaceMember` (`OWNER`, `ADMIN`, `MEMBER`, `VIEWER`), `Invitation`, `AuditLog`, `Project`, `Deployment`, `Service`.
+- **DevOps & Orchestration Layer**: Dual-driver execution engine (Local simulated container runner + Edge proxy router), Nixpacks auto-detector, instant rollback mechanism, edge cache purger (`src/lib/edge`), and env var synchronizer.
+- **Production Delivery**: Vercel deployment pipeline (`https://www.syncbay.app`).
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| F1 | Workspace Dynamic View | `/dashboard/[slug]` overview, project list, member roles (OWNER, MEMBER, VIEWER), spending caps, audit activity logs | M3 | R1 |
-| F2 | Project 7-Tab Console | `/dashboard/projects/[id]` multi-tab console: Services, Deployments & Builds, Live Logs, Metrics, Databases & Buckets, Domains, Settings | M3 | R1 |
-| F3 | Global Settings Console | `/dashboard/settings` profile, API access tokens, authentication providers, billing configurations | M3 | R1 |
-| F4 | Resource Creation Flows | `/dashboard/projects/new`, `/dashboard/services/new`, `/dashboard/databases/new` creation modals/pages | M3 | R1 |
-| F5 | Navigation Zero-404s | Topbar workspace switcher dropdown, sidebar routes `/dashboard/members`, `/dashboard/usage`, `/dashboard/audit` | M3 | R1 |
-| F6 | Multi-Language Detection | Auto-detection for Node.js, Python, Go, Rust, Ruby, and Dockerfile from repository structure | M1 | R2 |
-| F7 | Nixpacks / CNB Engine | Nixpacks 4-phase plan generation (setup, install, build, start) and OCI-compliant build manifests | M1 | R2 |
-| F8 | Env Var & Reference Engine | Build/run command customization, root directory support, and `${{ Service/DB.VAR }}` inter-service resolution | M1 | R2 |
-| F9 | Deployment State Machine | Strict transition lifecycle: `QUEUED` → `BUILDING` → `DEPLOYING` → `ACTIVE` (and `FAILED` / `CRASHED` / `SLEEPING`) | M2 | R3 |
-| F10 | Dual-Driver Execution Engine | Local/Simulated Driver (zero-cloud demo mode) + Edge/Cloud Driver (Cloudflare Containers / Docker) | M2 | R3 |
-| F11 | Blue/Green Health Checks | Automated HTTP health checks gating traffic shift with instant auto-rollback on failure | M2 | R3 |
-| F12 | Real-Time SSE Log Console | In-memory ring buffer event bus streaming build steps and container stdout/stderr to browser terminal | M2 | R4 |
-| F13 | Real-Time Live Metrics | Live CPU, memory, network egress, and disk usage telemetry stream and visualization area charts | M2 | R4 |
-| F14 | Dynamic Subdomains & Domains | Default subdomains (`<service>-<env>.syncbay.app`) and custom hostname registration | M1 | R5 |
-| F15 | CNAME/TXT & SSL Flow | Automated CNAME/TXT verification record generation, status tracking, and SSL certificate provisioning | M1 | R5 |
-| F16 | Managed Databases | Postgres, Redis/Valkey, MySQL provisioning, connection string generation, and credential management | M1 | R6 |
-| F17 | Object Storage & Presigned URLs | S3/Cloudflare R2 compatible bucket provisioning, access keys, and presigned upload/download URLs | M1 | R6 |
-| F18 | Persistent Storage Volumes | Persistent volume configurations and service mounting definitions | M1 | R6 |
-| F19 | GitHub Push Webhook | GitHub OAuth/App repo listing, branch selection, and push webhook triggering automated builds | M2 | R7 |
-| F20 | Ephemeral PR Previews | GitHub PR webhook handler (`opened`, `synchronize`, `closed`), dynamic `pr-<num>` env provisioning, variable cloning, cleanup | M2 | R7 |
+| F01 | NextAuth RFC 9207 Issuer Fix | Configure `issuer: "https://github.com/login/oauth"` and account linking on GitHubProvider in `src/lib/auth.ts` | M1 | R1 |
+| F02 | OAuth Callback & Sign-in Redirection | Support `callbackUrl` in signin form and error-resilient callbacks | M1 | R1 |
+| F03 | TypeScript & Build Compilation Unblock | Fix TS2737 BigInt literals in `src/lib/devops/waf-engine.ts` and set target `ES2022` in `tsconfig.json` | M1 | AC / Quality |
+| F04 | Collapsible Sidebar & Tooltip Fix | Prevent tooltip clipping in collapsed sidebar via CSS, persist state via localStorage | M2 | R2 |
+| F05 | Mobile Responsive Navigation | Add `.hide-on-mobile`, touch targets, mobile drawer sheet, zero horizontal scroll overflow on <768px | M2 | R2 |
+| F06 | Dashboard Route Completeness | Eliminate 404s by adding `/dashboard/databases` and `/dashboard/team` | M2 | R2, AC |
+| F07 | Prisma Schema RBAC Expansion | Add `ADMIN` role to `WorkspaceRole` enum in `prisma/schema.prisma` and generate client | M3 | R3 |
+| F08 | RBAC Permission Enforcement & Deletion Guard | Restrict project deletion and billing to `OWNER` and `ADMIN`; block `MEMBER` from deletion | M3 | R3, AC |
+| F09 | Team Invitation Flow & `/invite/[token]` | Support invitation token generation, `/invite/[token]` page, email invite dialog, role assignment | M3 | R3 |
+| F10 | Member Management Table & Audit Logging | Member list with role changing, revocation, and audit log events | M3 | R3 |
+| F11 | Tiered Pricing Engine (/pricing) | Interactive selector for Hobby ($0/mo), Pro ($18/mo, unlimited seats), Enterprise ($450/mo) | M4 | R4 |
+| F12 | Competitive Comparison Matrix | Side-by-side feature comparison matrix against Vercel and Railway | M4 | R4 |
+| F13 | Official US Corporate Identity & Footer | Update corporate identity to Syncbay Technologies Inc., 548 Market St, Suite 82194, San Francisco, CA 94104, United States in layout, footer, and metadata | M4 | R5 |
+| F14 | Instant Deployment Rollback | Sub-second rollback shifting domain traffic without full rebuild delay | M5 | R6 |
+| F15 | Environment Variable Synchronization | Bulk `.env` import, cross-environment variable copying, and workspace inheritance | M5 | R6 |
+| F16 | Edge Cache Purging Engine | Edge POP cache invalidation (by tag, path, or all) integrated with rollback and CLI | M5 | R6 |
+| F17 | Comprehensive E2E Test Suite Pass | 100% pass on Tiers 1-4 opaque-box tests covering all PaaS capabilities | M6 | AC |
+| F18 | Adversarial Hardening (Tier 5) | White-box stress-testing, boundary edge cases, and vulnerability testing | M6 | Process |
+| F19 | Production Build & Live Verification | `npm run build` cleanly succeeds and verified live on https://www.syncbay.app | M6 | AC |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Backend Engines, Data Layer & API Routers | Buildpack engine (F6, F7, F8), Database/Bucket/Domain/Volume services & tRPC routers (F14, F15, F16, F17, F18), bug fixes in service.ts & database-provider.ts | none | COMPLETED ✔ |
-| M2 | Deployment Orchestrator, Dual-Driver, Logs/Metrics & GitHub | Deployment state machine & Dual-Driver (F9, F10, F11), SSE Log & Metrics streams (F12, F13), GitHub webhooks & PR preview manager (F19, F20) | M1 | COMPLETED ✔ |
-| M3 | Complete Dashboard UI & Page Hierarchy (Zero 404s) | Dynamic workspace view (F1), 7-tab project console (F2), global settings (F3), resource creation flows (F4), navigation zero-404 routes & switcher (F5) | M1, M2 | COMPLETED ✔ |
-| M4 | Final Milestone: 100% E2E Test Pass & Coverage Hardening | Phase 1: Pass 100% of E2E test suite (Tiers 1-4, 222/222 passing). Phase 2: Adversarial coverage hardening. Type-check (`npx tsc --noEmit` = 0) and production build (`npm run build` = 17/17 routes) | M1, M2, M3 | COMPLETED ✔ |
-| M5 | Multi-Region Edge Networking & Cloud Container Proxy | 6 Tier-1 global POPs, latency routing, automated failover cascade, TLS 1.3/HTTP3 | M1-M4 | COMPLETED ✔ |
-| M6 | Syncbay Developer CLI (`syncbay`) & Public OpenAPI Platform | Standalone CLI, `syncbay.json` manifest engine, GitHub Actions deploy step, `/api/v1/*` OpenAPI 3.1 platform | M1-M4 | COMPLETED ✔ |
-| M7 | Interactive Web Shell & Database Query Studio | VT100 web terminal connecting to container environment, embedded SQL & Redis query studio with schema browser | M1-M4 | COMPLETED ✔ |
-| M8 | DevOps Hyper-Plane, WAF, Crons, Canary, Responsive Sidebar & Plans | Automated scheduled crons, Edge WAF & rate limiter, canary traffic shifting, auto-tuner, AI deploy diagnoser, collapsible sidebar & mobile drawer, RBAC, competitor pricing matrix, and American company compliance | M1-M7 | COMPLETED ✔ |
+| M1 | Auth RFC 9207 & Build Compilation Unblock | F01, F02, F03 | none | PLANNED |
+| M2 | Collapsible Sidebar & Universal Mobile Responsiveness | F04, F05, F06 | none | PLANNED |
+| M3 | Workspace RBAC & Team Member Invitations | F07, F08, F09, F10 | M1 | PLANNED |
+| M4 | Competitive Plans & Pricing Engine + Corporate Identity | F11, F12, F13 | none | PLANNED |
+| M5 | Advanced DevOps Capabilities & Deployment Engine | F14, F15, F16 | M1 | PLANNED |
+| M6 | Final Verification & Adversarial Hardening (Dual Track Integration) | F17, F18, F19 | M1, M2, M3, M4, M5 | PLANNED |
 
 ## Interface Contracts
 
-### 1. Buildpack Engine (`src/lib/buildpack/`)
-- `detectRuntime(files: string[]): { language: string; framework?: string; buildCommand: string; startCommand: string; dockerfile?: string }`
-- `generateNixpacksPlan(runtime: DetectedRuntime, options?: BuildOptions): NixpacksPlan`
-- `resolveEnvironmentVariables(variables: EnvVar[], context: ResolutionContext): ResolvedEnvVar[]`
+### Auth ↔ NextAuth Handler
+- GitHubProvider config: `{ clientId, clientSecret, issuer: "https://github.com/login/oauth", allowDangerousEmailAccountLinking: true }`
+- Sign-in redirect: `callbackUrl` query parameter preserved and respected.
 
-### 2. Deployment Orchestrator & Dual-Driver (`src/lib/orchestrator/`)
-- `DeploymentDriver` interface:
-  - `startBuild(deploymentId: string, buildId: string, config: BuildConfig): Promise<void>`
-  - `checkHealth(deploymentId: string, healthEndpoint: string): Promise<{ healthy: boolean; statusCode?: number }>`
-  - `promoteDeployment(deploymentId: string, serviceId: string): Promise<void>`
-  - `rollbackDeployment(failedDeploymentId: string, serviceId: string): Promise<void>`
-- `executeDeployment(deploymentId: string, driverType: "LOCAL" | "CLOUD"): Promise<void>`
+### Workspace & RBAC ↔ Routers
+- `WorkspaceRole`: `"OWNER" | "ADMIN" | "MEMBER" | "VIEWER"`
+- Permissions:
+  - `deleteProject`: `role === "OWNER" || role === "ADMIN"` (MEMBER and VIEWER get `FORBIDDEN`)
+  - `inviteMember`: `role === "OWNER" || role === "ADMIN"`
+  - `modifyBilling`: `role === "OWNER" || role === "ADMIN"`
+- Invitations: Token-based `/invite/[token]` accepting invite redirects to `/dashboard` or prompts signin with `callbackUrl=/invite/[token]`.
 
-### 3. Telemetry & Log Streaming (`src/lib/telemetry/`)
-- `logEventBus`:
-  - `publish(deploymentId: string, logLine: { timestamp: string; stream: "stdout" | "stderr" | "system"; message: string }): void`
-  - `subscribe(deploymentId: string, listener: (log: LogEntry) => void): () => void`
-  - `getHistory(deploymentId: string): LogEntry[]`
-- SSE endpoints:
-  - `GET /api/deployments/[id]/logs/stream` -> `text/event-stream`
-  - `GET /api/deployments/[id]/metrics/stream` -> `text/event-stream`
-
-### 4. Managed Services & Domain Providers (`src/lib/`)
-- `databaseProvider`:
-  - `provision(params: { provider: "POSTGRES" | "REDIS" | "MYSQL"; name: string }): Promise<DatabaseCredentials>`
-- `storageProvider`:
-  - `provisionBucket(params: { name: string; projectId: string }): Promise<BucketDetails>`
-  - `generatePresignedUrl(bucketName: string, key: string, operation: "get" | "put"): Promise<string>`
-- `domainService`:
-  - `generateDefaultSubdomain(serviceName: string, envName: string): string`
-  - `generateVerificationRecords(domain: string): { cnameTarget: string; txtRecord: string }`
-  - `verifyDomain(domainId: string): Promise<DomainStatus>`
+### DevOps & Deployment Engine ↔ Edge Router
+- `instantRollback(deploymentId: string)`:
+  - Updates target deployment to `ACTIVE`, previous to `SUPERSEDED`.
+  - Shifts edge domain routing to target deployment snapshot.
+  - Automatically invokes `purgeEdgeCache({ all: true })`.
+- `syncVariables(serviceId: string, variables: Record<string, string>, mode: "merge" | "overwrite")`
+- `purgeEdgeCache(options: { domain?: string, path?: string, tag?: string, all?: boolean })`
 
 ## Code Layout
-```
-src/
-├── app/
-│   ├── api/
-│   │   ├── deployments/[id]/logs/stream/route.ts   # SSE log stream
-│   │   ├── deployments/[id]/metrics/stream/route.ts # SSE metrics stream
-│   │   └── webhooks/github/route.ts                # GitHub push & PR webhooks
-│   ├── dashboard/
-│   │   ├── [slug]/page.tsx                         # Workspace overview
-│   │   ├── projects/
-│   │   │   ├── [id]/page.tsx                       # 7-Tab Project console
-│   │   │   └── new/page.tsx                        # New project flow
-│   │   ├── services/new/page.tsx                   # New service flow
-│   │   ├── databases/new/page.tsx                  # New database flow
-│   │   ├── settings/page.tsx                       # Global settings
-│   │   ├── members/page.tsx                        # Workspace members shortcut
-│   │   ├── usage/page.tsx                          # Usage & billing shortcut
-│   │   ├── audit/page.tsx                          # Audit log shortcut
-│   │   ├── layout.tsx                              # Topbar workspace switcher & nav
-│   │   └── page.tsx                                # Dashboard root
-├── components/
-│   ├── dashboard/
-│   │   ├── workspace-switcher.tsx                  # Workspace dropdown selector
-│   │   ├── log-terminal.tsx                        # Live SSE terminal viewer
-│   │   ├── metrics-chart.tsx                       # Live telemetry graphs
-│   │   └── project-tabs/                           # Multi-tab subcomponents
-├── lib/
-│   ├── buildpack/
-│   │   ├── detector.ts                             # Multi-language runtime detection
-│   │   ├── nixpacks.ts                             # Nixpacks plan & manifest generator
-│   │   └── resolver.ts                             # ${{ ... }} variable resolver
-│   ├── orchestrator/
-│   │   ├── orchestrator.ts                         # Deployment lifecycle state machine
-│   │   ├── pr-preview-manager.ts                   # Ephemeral PR environments lifecycle
-│   │   └── drivers/
-│   │       ├── driver.interface.ts                 # Dual-driver abstract interface
-│   │       ├── local-driver.ts                     # Local / simulated execution driver
-│   │       └── cloud-driver.ts                     # Edge / cloud container driver
-│   ├── telemetry/
-│   │   ├── event-bus.ts                            # In-memory ring buffer log pub/sub
-│   │   └── metrics-generator.ts                    # Real-time metrics telemetry provider
-│   ├── database-provider.ts                        # Managed Postgres/Redis/MySQL provider
-│   ├── storage-provider.ts                         # S3/R2 bucket & presigned URL provider
-│   └── domain-service.ts                           # Dynamic subdomains & SSL verification
-└── server/
-    ├── root.ts                                     # Root tRPC router
-    └── routers/
-        ├── workspace.ts                            # Workspace operations
-        ├── project.ts                              # Project operations
-        ├── service.ts                              # Service operations
-        ├── deployment.ts                           # Deployment operations
-        ├── database.ts                             # Managed database operations
-        ├── bucket.ts                               # Object storage operations
-        ├── domain.ts                               # Custom domain operations
-        ├── volume.ts                               # Persistent volume operations
-        └── metrics.ts                              # Telemetry operations
-```
+- `src/app/`: Next.js 14 App Router routes and pages
+  - `src/app/dashboard/`: Dashboard views (`/dashboard`, `/dashboard/projects`, `/dashboard/databases`, `/dashboard/team`, `/dashboard/settings`)
+  - `src/app/pricing/`: Public pricing engine and comparison matrix
+  - `src/app/invite/[token]/`: Secure team invitation acceptance page
+  - `src/app/auth/`: Sign-in and authentication pages
+- `src/components/`: Reusable UI components (Sidebar, Topbar, Modals, ComparisonTable)
+- `src/lib/`: Core libraries (auth, prisma, edge router, devops)
+  - `src/lib/auth.ts`: NextAuth configuration
+  - `src/lib/edge/`: Edge POP routing, caching, and cache purging
+  - `src/lib/devops/`: Buildpack engine, WAF, metrics, rollback
+- `src/server/routers/`: tRPC backend routers (`workspace.ts`, `project.ts`, `deployment.ts`, `service.ts`, `devops.ts`)
+- `prisma/schema.prisma`: Prisma schema and SQLite database definitions
+- `tests/e2e/`: E2E test suite runners and test files

@@ -8,7 +8,7 @@ interface DevOpsSuiteProps {
   projectId: string;
 }
 
-type DevOpsSubTab = "crons" | "waf" | "canary" | "ai" | "autotune";
+type DevOpsSubTab = "crons" | "waf" | "canary" | "ai" | "autotune" | "vercel";
 
 export function DevOpsSuite({ serviceId, projectId }: DevOpsSuiteProps) {
   const [activeTab, setActiveTab] = useState<DevOpsSubTab>("crons");
@@ -61,6 +61,108 @@ export function DevOpsSuite({ serviceId, projectId }: DevOpsSuiteProps) {
     files: sampleFiles,
     packageJsonSnippet: '{"dependencies": {"next": "16.3.4", "react": "19.2.8"}}',
   });
+
+  // Vercel Migrator state
+  const [vercelJsonInput, setVercelJsonInput] = useState<string>(
+    JSON.stringify(
+      {
+        framework: "nextjs",
+        buildCommand: "npm run build",
+        cleanUrls: true,
+        crons: [
+          { path: "/api/cron/sync-inventory", schedule: "0 4 * * *" },
+          { path: "/api/cron/cleanup-sessions", schedule: "*/30 * * * *" }
+        ],
+        redirects: [
+          { source: "/legacy-api/:match*", destination: "/api/v2/:match*", permanent: true }
+        ],
+        headers: [
+          {
+            source: "/(.*)",
+            headers: [
+              { key: "X-Frame-Options", value: "DENY" },
+              { key: "X-Content-Type-Options", value: "nosniff" },
+              { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }
+            ]
+          }
+        ],
+        functions: {
+          "api/**/*.ts": { memory: 1024, maxDuration: 60 }
+        }
+      },
+      null,
+      2
+    )
+  );
+  const [vercelPlan, setVercelPlan] = useState<any>(null);
+  const [vercelError, setVercelError] = useState<string | null>(null);
+  const [vercelSuccess, setVercelSuccess] = useState<string | null>(null);
+  const [migratingVercel, setMigratingVercel] = useState(false);
+
+  const applyVercelMutation = trpc.devops.applyVercelMigration.useMutation();
+
+  const handleAnalyzeVercel = () => {
+    setVercelError(null);
+    try {
+      const parsed = JSON.parse(vercelJsonInput);
+      const plan = {
+        detectedFramework: parsed.framework || "Next.js",
+        cronsToCreate: (parsed.crons || []).map((c: any) => ({
+          name: `Cron: ${c.path.replace(/^\/api\/cron\/?/, "")}`,
+          path: c.path,
+          schedule: c.schedule,
+          method: "GET",
+        })),
+        wafRules: {
+          rateLimitRpm: 120,
+          ddosShieldEnabled: true,
+          botProtectionEnabled: true,
+          securityHeaders: (parsed.headers?.[0]?.headers || []).reduce((acc: any, h: any) => {
+            acc[h.key] = h.value;
+            return acc;
+          }, {}),
+        },
+        computeSpec: {
+          instanceType: "standard-1",
+          scaleToZero: true,
+          idleTimeoutSecs: 300,
+        },
+        estimatedMonthlySavingsUsd: 118,
+        competitiveAdvantages: [
+          "Zero Seat Tax: Unlimited team collaborators included (Save $20/user/mo vs Vercel)",
+          "Persistent Volume Support: Attach real UNIX SSD volumes for databases and stateful workloads",
+          "Automated Edge WAF: Built-in sliding-window rate limiting & DDoS mitigation included at no extra cost",
+          "Native Managed DBs: Instant 1-click PostgreSQL and Redis provisioned inside private subnets",
+          "Canary Traffic Shifting: Automated 0-100% gradual traffic routing with 5xx circuit-breaker rollbacks",
+          "Interactive Web Terminal: Direct container shell execution and live DB Query Studio",
+        ],
+      };
+      setVercelPlan(plan);
+    } catch (err: any) {
+      setVercelError(err.message || "Invalid JSON syntax");
+    }
+  };
+
+  const handleApplyVercelMigration = async () => {
+    if (!vercelJsonInput) return;
+    setMigratingVercel(true);
+    setVercelError(null);
+    setVercelSuccess(null);
+    try {
+      const res = await applyVercelMutation.mutateAsync({
+        serviceId,
+        rawJson: vercelJsonInput,
+      });
+      setVercelSuccess(
+        `Successfully applied Vercel configuration! Added ${res.result.cronsAdded} edge crons and configured Edge WAF rules.`
+      );
+      await Promise.all([refetchCrons(), refetchWaf()]);
+    } catch (err: any) {
+      setVercelError(err.message || "Failed to apply migration");
+    } finally {
+      setMigratingVercel(false);
+    }
+  };
 
   const handleCreateCron = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,6 +353,12 @@ export function DevOpsSuite({ serviceId, projectId }: DevOpsSuiteProps) {
           className={`btn btn-sm ${activeTab === "autotune" ? "btn-primary" : "btn-secondary"}`}
         >
           ⚡ Zero-Config Auto-Tuner
+        </button>
+        <button
+          onClick={() => setActiveTab("vercel")}
+          className={`btn btn-sm ${activeTab === "vercel" ? "btn-primary" : "btn-secondary"}`}
+        >
+          ▲ Vercel Migrator &amp; Importer
         </button>
       </div>
 
@@ -853,6 +961,120 @@ export function DevOpsSuite({ serviceId, projectId }: DevOpsSuiteProps) {
               >
                 ✓ Apply Recommended Configurations
               </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── SUBTAB 6: VERCEL MIGRATOR & AUTO-CONFIG ── */}
+      {activeTab === "vercel" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {vercelSuccess && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "var(--radius-md)",
+                background: "rgba(34,197,94,0.15)",
+                border: "1px solid rgba(34,197,94,0.3)",
+                color: "#4ade80",
+                fontSize: "0.8125rem",
+              }}
+            >
+              {vercelSuccess}
+            </div>
+          )}
+
+          {vercelError && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "var(--radius-md)",
+                background: "rgba(239,68,68,0.15)",
+                border: "1px solid rgba(239,68,68,0.3)",
+                color: "#f87171",
+                fontSize: "0.8125rem",
+              }}
+            >
+              {vercelError}
+            </div>
+          )}
+
+          <div className="card" style={{ background: "var(--bg-overlay)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+              <div>
+                <h4 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "4px" }}>
+                  ▲ Automated Vercel Configuration Importer
+                </h4>
+                <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)" }}>
+                  Paste or detect your <code>vercel.json</code>. Syncbay automatically parses crons, rewrites, security headers, and function timeouts into native Syncbay Edge services.
+                </p>
+              </div>
+              <span className="badge badge-queued">Vercel CLI 59+ Compatible</span>
+            </div>
+
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, display: "block", marginBottom: "6px" }}>
+                vercel.json Configuration Content
+              </label>
+              <textarea
+                className="input"
+                rows={9}
+                style={{ fontFamily: "monospace", fontSize: "0.8125rem", width: "100%", resize: "vertical" }}
+                value={vercelJsonInput}
+                onChange={(e) => setVercelJsonInput(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button onClick={handleAnalyzeVercel} className="btn btn-secondary btn-sm">
+                🔍 Analyze Vercel Config
+              </button>
+              <button
+                onClick={handleApplyVercelMigration}
+                disabled={migratingVercel}
+                className="btn btn-primary btn-sm"
+              >
+                {migratingVercel ? "Applying Migration..." : "⚡ 1-Click Import & Apply to Syncbay"}
+              </button>
+            </div>
+          </div>
+
+          {vercelPlan && (
+            <div className="card" style={{ background: "var(--bg-overlay)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: 700 }}>
+                  Synthesized Syncbay Optimizations
+                </h4>
+                <span className="badge badge-active" style={{ background: "rgba(6,182,212,0.2)", color: "#22d3ee" }}>
+                  Save ~${vercelPlan.estimatedMonthlySavingsUsd}/mo (No Seat Tax)
+                </span>
+              </div>
+
+              <div className="grid-3" style={{ gap: "12px", marginBottom: "16px" }}>
+                <div style={{ padding: "10px", background: "var(--bg-card)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Edge Crons Synthesized</div>
+                  <strong style={{ fontSize: "1.1rem" }}>{vercelPlan.cronsToCreate.length} Jobs</strong>
+                </div>
+                <div style={{ padding: "10px", background: "var(--bg-card)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>WAF Rate Limit</div>
+                  <strong style={{ fontSize: "1.1rem" }}>{vercelPlan.wafRules.rateLimitRpm} RPM</strong>
+                </div>
+                <div style={{ padding: "10px", background: "var(--bg-card)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Compute Scaling</div>
+                  <strong style={{ fontSize: "1.1rem" }}>{vercelPlan.computeSpec.instanceType} (Scale-to-Zero)</strong>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700, marginBottom: "6px" }}>
+                  Syncbay Advantages Over Vercel
+                </div>
+                <ul style={{ paddingLeft: "20px", fontSize: "0.8125rem", color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {vercelPlan.competitiveAdvantages.map((adv: string, idx: number) => (
+                    <li key={idx}>✓ {adv}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
         </div>

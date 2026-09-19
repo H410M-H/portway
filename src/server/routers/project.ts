@@ -101,7 +101,9 @@ export const projectRouter = createTRPCRouter({
           },
         },
       });
-      if (!member) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!member || member.role === "VIEWER") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Viewers cannot create projects" });
+      }
 
       return ctx.db.project.create({
         data: {
@@ -134,6 +136,11 @@ export const projectRouter = createTRPCRouter({
         input.projectId
       );
 
+      const callerMember = project.workspace.members.find((m) => m.userId === ctx.session.user.id);
+      if (!callerMember || callerMember.role === "VIEWER") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Viewers cannot delete projects" });
+      }
+
       if (input.confirmName !== project.name) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -156,7 +163,11 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      await assertProjectAccess(ctx.db, ctx.session.user.id, input.projectId);
+      const project = await assertProjectAccess(ctx.db, ctx.session.user.id, input.projectId);
+      const callerMember = project.workspace.members.find((m) => m.userId === ctx.session.user.id);
+      if (!callerMember || callerMember.role === "VIEWER") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Viewers cannot create environments" });
+      }
 
       return ctx.db.environment.create({
         data: {

@@ -124,12 +124,19 @@ export const databaseRouter = createTRPCRouter({
         where: {
           id: env.projectId,
           deletedAt: null,
-          workspace: { members: { some: { userId: ctx.session.user.id } } },
+          workspace: {
+            members: {
+              some: {
+                userId: ctx.session.user.id,
+                role: { in: ["OWNER", "MEMBER"] },
+              },
+            },
+          },
         },
       });
 
       if (!project) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Insufficient permissions to provision database" });
       }
 
       // 2. Call partner API or local provider to provision
@@ -226,7 +233,7 @@ export const databaseRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Name confirmation mismatch" });
       }
 
-      // Verify access
+      // Verify access — OWNER or MEMBER only
       const member = await ctx.db.workspaceMember.findUnique({
         where: {
           workspaceId_userId: {
@@ -236,7 +243,9 @@ export const databaseRouter = createTRPCRouter({
         },
       });
 
-      if (!member) throw new TRPCError({ code: "FORBIDDEN" });
+      if (!member || member.role === "VIEWER") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Viewers cannot delete databases" });
+      }
 
       // Call partner API / provider destruction
       if (dbInstance.partnerDbId) {

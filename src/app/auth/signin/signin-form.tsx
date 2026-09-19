@@ -4,10 +4,34 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+/**
+ * Sanitizes a redirect URL to prevent Open Redirect vulnerabilities.
+ * Ensures the destination is strictly an internal relative path starting with a single "/".
+ * Protocol-relative ("//"), backslash bypasses ("/\\"), and external absolute URLs fall back to defaultPath.
+ */
+export function getSafeCallbackUrl(
+  raw: string | null | undefined,
+  defaultPath: string = "/dashboard"
+): string {
+  if (!raw || typeof raw !== "string") {
+    return defaultPath;
+  }
+  const trimmed = raw.trim();
+  if (
+    trimmed.startsWith("/") &&
+    !trimmed.startsWith("//") &&
+    !trimmed.startsWith("/\\")
+  ) {
+    return trimmed;
+  }
+  return defaultPath;
+}
+
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,13 +63,13 @@ export function SignInForm() {
         email,
         password,
         redirect: false,
-        callbackUrl: "/dashboard",
+        callbackUrl,
       });
 
       if (res?.error) {
         setError("Invalid email or password. Please check your credentials.");
       } else if (res?.ok) {
-        router.push("/dashboard");
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (err: any) {
@@ -57,7 +81,7 @@ export function SignInForm() {
 
   const handleGitHub = async () => {
     setIsGitHubLoading(true);
-    await signIn("github", { callbackUrl: "/dashboard" });
+    await signIn("github", { callbackUrl });
   };
 
   return (

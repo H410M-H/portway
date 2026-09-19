@@ -206,6 +206,10 @@ export function toggleCronJob(cronId: string, enabled: boolean): CronJob {
   return job;
 }
 
+export function getCronJobById(cronId: string): CronJob | undefined {
+  return cronStore.get(cronId);
+}
+
 export function deleteCronJob(cronId: string): boolean {
   return cronStore.delete(cronId);
 }

@@ -29,6 +29,7 @@ import {
   getDefaultWafConfig,
   updateWafConfig,
   inspectRequest,
+  cleanupExpiredRateLimits,
 } from "../../src/lib/devops/waf-engine";
 
 import {
@@ -42,6 +43,7 @@ import {
 
 import { autoTuneFramework } from "../../src/lib/devops/auto-tuner";
 import { diagnoseBuildLogs } from "../../src/lib/devops/ai-diagnostics";
+import { parseVercelConfig, applyVercelMigration } from "../../src/lib/devops/vercel-migrator";
 import { adapter } from "../harness/adapter";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -151,6 +153,53 @@ registerTest("DEVOPS-WAF-03", "DevOps", 6, "Edge Request Inspection intercepts m
   const blockedGeo = inspectRequest(serviceId, { ip: "192.0.2.200", path: "/api/data", countryCode: "ZZ" });
   assertFalse(blockedGeo.allowed, "Geo-blocked country must be blocked");
   assertEqual(blockedGeo.status, 403);
+});
+
+registerTest("DEVOPS-WAF-04", "DevOps", 6, "Arbitrary IPv4 CIDR matching (/28, /12, /32) and boundary checks", () => {
+  const customList = ["192.168.1.0/28", "172.16.0.0/12", "10.5.5.5/32"];
+
+  // /28: matches 192.168.1.0 - 192.168.1.15
+  assertTrue(isIpInList("192.168.1.5", customList), "192.168.1.5 in /28 must be true");
+  assertTrue(isIpInList("192.168.1.15", customList), "192.168.1.15 in /28 must be true");
+  assertFalse(isIpInList("192.168.1.16", customList), "192.168.1.16 outside /28 must be false");
+
+  // /12: matches 172.16.0.0 - 172.31.255.255
+  assertTrue(isIpInList("172.20.10.5", customList), "172.20.10.5 in /12 must be true");
+  assertFalse(isIpInList("172.32.0.1", customList), "172.32.0.1 outside /12 must be false");
+
+  // /32: single host
+  assertTrue(isIpInList("10.5.5.5", customList), "10.5.5.5 exact host must be true");
+  assertFalse(isIpInList("10.5.5.6", customList), "10.5.5.6 must be false");
+});
+
+registerTest("DEVOPS-WAF-05", "DevOps", 6, "IPv6 normalization and CIDR subnet matching (2001:db8::/32, ::1)", () => {
+  const ipv6List = ["2001:db8::/32", "fe80::/10", "::1"];
+
+  // IPv6 CIDR /32
+  assertTrue(isIpInList("2001:db8::1", ipv6List), "2001:db8::1 in /32 must be true");
+  assertTrue(isIpInList("2001:db8:ffff:ffff::1", ipv6List), "2001:db8:ffff:ffff::1 in /32 must be true");
+  assertFalse(isIpInList("2001:db9::1", ipv6List), "2001:db9::1 outside /32 must be false");
+
+  // Exact ::1 and normalized form
+  assertTrue(isIpInList("::1", ipv6List), "Localhost ::1 must be true");
+  assertTrue(isIpInList("0000:0000:0000:0000:0000:0000:0000:0001", ipv6List), "Expanded ::1 must match");
+
+  // Link local /10
+  assertTrue(isIpInList("fe80::1", ipv6List), "fe80::1 in /10 link-local must be true");
+  assertFalse(isIpInList("fc00::1", ipv6List), "fc00::1 unique local outside /10 must be false");
+});
+
+registerTest("DEVOPS-WAF-06", "DevOps", 6, "Sliding-window memory cleanup prunes expired IP tracking entries", () => {
+  const expiredIp = "203.0.113.222";
+  const oldTime = Date.now() - 120000; // 2 minutes ago
+  evaluateRateLimit(expiredIp, 50, 60000, oldTime);
+
+  // Prune expired entries older than 60s
+  cleanupExpiredRateLimits(Date.now(), 60000);
+
+  // Fresh evaluation must now see 1 request
+  const fresh = evaluateRateLimit(expiredIp, 50, 60000, Date.now());
+  assertEqual(fresh.currentCount, 1, "Expired entries should have been pruned");
 });
 
 // ══════════════════════════════════════════════════════════════════════════════

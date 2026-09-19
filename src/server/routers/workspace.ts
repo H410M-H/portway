@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/trpc";
 import { TRPCError } from "@trpc/server";
 import { WorkspaceRole } from "@prisma/client";
 
@@ -209,6 +209,23 @@ export const workspaceRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
 
+      // Prevent accidental lockout: cannot demote the only owner
+      if (input.userId === ctx.session.user.id && input.role !== "OWNER") {
+        const otherOwners = await ctx.db.workspaceMember.count({
+          where: {
+            workspaceId: input.workspaceId,
+            role: "OWNER",
+            userId: { not: ctx.session.user.id },
+          },
+        });
+        if (otherOwners === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Cannot demote the only owner of the workspace. Promote another owner first.",
+          });
+        }
+      }
+
       return ctx.db.workspaceMember.update({
         where: {
           workspaceId_userId: {
@@ -305,8 +322,8 @@ export const workspaceRouter = createTRPCRouter({
       });
     }),
 
-  /** Get invite details by token (public/protected) */
-  getInvite: protectedProcedure
+  /** Get invite details by token (public procedure allowing invite preview before sign in) */
+  getInvite: publicProcedure
     .input(z.object({ token: z.string() }))
     .query(async ({ ctx, input }) => {
       const invite = await ctx.db.workspaceInvite.findUnique({
@@ -337,6 +354,18 @@ export const workspaceRouter = createTRPCRouter({
       });
       if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid, expired, or already accepted" });
+      }
+
+      // Security check: if invite was addressed to specific email, verify caller email match
+      if (
+        invite.email &&
+        ctx.session.user.email &&
+        invite.email.toLowerCase() !== ctx.session.user.email.toLowerCase()
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `This invitation was designated for ${invite.email}. You are currently signed in as ${ctx.session.user.email}.`,
+        });
       }
 
       // Add user to workspace if not already member

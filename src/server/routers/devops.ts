@@ -8,6 +8,7 @@ import {
   deleteCronJob,
   executeCronJob,
   getCronRunLogs,
+  getCronJobById,
 } from "@/lib/devops/cron-engine";
 import {
   getDefaultWafConfig,
@@ -22,12 +23,81 @@ import {
 } from "@/lib/devops/canary-engine";
 import { autoTuneFramework } from "@/lib/devops/auto-tuner";
 import { diagnoseBuildLogs } from "@/lib/devops/ai-diagnostics";
+import { parseVercelConfig, applyVercelMigration } from "@/lib/devops/vercel-migrator";
+
+/**
+ * RBAC Helper: Asserts caller has access to the workspace containing the service
+ */
+async function assertDevopsAccess(
+  db: any,
+  userId: string,
+  serviceId: string,
+  allowedRoles: ("OWNER" | "MEMBER" | "VIEWER")[] = ["OWNER", "MEMBER"]
+) {
+  const service = await db.service.findFirst({
+    where: {
+      id: serviceId,
+      deletedAt: null,
+      environment: {
+        project: {
+          deletedAt: null,
+          workspace: {
+            members: {
+              some: {
+                userId,
+                role: { in: allowedRoles },
+              },
+            },
+          },
+        },
+      },
+    },
+    include: {
+      environment: {
+        include: {
+          project: {
+            include: {
+              workspace: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!service) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Insufficient permissions or service not found in your workspaces",
+    });
+  }
+
+  return service;
+}
+
+/**
+ * RBAC Helper for cron-based actions: resolves serviceId from cron ID and verifies permissions
+ */
+async function assertCronAccess(
+  db: any,
+  userId: string,
+  cronId: string,
+  allowedRoles: ("OWNER" | "MEMBER" | "VIEWER")[] = ["OWNER", "MEMBER"]
+) {
+  const cron = getCronJobById(cronId);
+  if (!cron) {
+    throw new TRPCError({ code: "NOT_FOUND", message: `Cron job not found: ${cronId}` });
+  }
+  await assertDevopsAccess(db, userId, cron.serviceId, allowedRoles);
+  return cron;
+}
 
 export const devopsRouter = createTRPCRouter({
   // ─── CRON SCHEDULER ────────────────────────────────────────────────────────
   listCrons: protectedProcedure
     .input(z.object({ serviceId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER", "VIEWER"]);
       return listCronsForService(input.serviceId);
     }),
 
@@ -41,7 +111,8 @@ export const devopsRouter = createTRPCRouter({
         method: z.enum(["GET", "POST"]).default("GET"),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER"]);
       try {
         return createCronJob(input);
       } catch (err: any) {
@@ -51,7 +122,8 @@ export const devopsRouter = createTRPCRouter({
 
   toggleCron: protectedProcedure
     .input(z.object({ cronId: z.string(), enabled: z.boolean() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCronAccess(ctx.db, ctx.session.user.id, input.cronId, ["OWNER", "MEMBER"]);
       try {
         return toggleCronJob(input.cronId, input.enabled);
       } catch (err: any) {
@@ -61,7 +133,8 @@ export const devopsRouter = createTRPCRouter({
 
   triggerCron: protectedProcedure
     .input(z.object({ cronId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCronAccess(ctx.db, ctx.session.user.id, input.cronId, ["OWNER", "MEMBER"]);
       try {
         return await executeCronJob(input.cronId);
       } catch (err: any) {
@@ -71,20 +144,23 @@ export const devopsRouter = createTRPCRouter({
 
   deleteCron: protectedProcedure
     .input(z.object({ cronId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertCronAccess(ctx.db, ctx.session.user.id, input.cronId, ["OWNER", "MEMBER"]);
       return { success: deleteCronJob(input.cronId) };
     }),
 
   getCronLogs: protectedProcedure
     .input(z.object({ cronId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertCronAccess(ctx.db, ctx.session.user.id, input.cronId, ["OWNER", "MEMBER", "VIEWER"]);
       return getCronRunLogs(input.cronId);
     }),
 
   // ─── WAF & RATE LIMITING ───────────────────────────────────────────────────
   getWafConfig: protectedProcedure
     .input(z.object({ serviceId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER", "VIEWER"]);
       return getDefaultWafConfig(input.serviceId);
     }),
 
@@ -102,21 +178,24 @@ export const devopsRouter = createTRPCRouter({
         geoBlockCountries: z.array(z.string()).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER"]);
       const { serviceId, ...partial } = input;
       return updateWafConfig(serviceId, partial);
     }),
 
   getSecurityEvents: protectedProcedure
     .input(z.object({ serviceId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER", "VIEWER"]);
       return getSecurityEvents(input.serviceId);
     }),
 
   // ─── CANARY & ROLLING RELEASES ─────────────────────────────────────────────
   getCanaryConfig: protectedProcedure
     .input(z.object({ serviceId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER", "VIEWER"]);
       return getCanaryConfig(input.serviceId);
     }),
 
@@ -127,19 +206,22 @@ export const devopsRouter = createTRPCRouter({
         weightPercent: z.number().min(0).max(100),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER"]);
       return updateCanaryWeight(input.serviceId, input.weightPercent);
     }),
 
   promoteCanary: protectedProcedure
     .input(z.object({ serviceId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER"]);
       return promoteCanary(input.serviceId);
     }),
 
   rollbackCanary: protectedProcedure
     .input(z.object({ serviceId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER"]);
       return rollbackCanary(input.serviceId);
     }),
 
@@ -163,7 +245,41 @@ export const devopsRouter = createTRPCRouter({
         logLines: z.array(z.string()),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER", "VIEWER"]);
       return diagnoseBuildLogs(input.logLines);
+    }),
+
+  // ─── VERCEL CLI PARSER & MIGRATOR ──────────────────────────────────────────
+  parseVercelConfig: protectedProcedure
+    .input(z.object({ rawJson: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        return parseVercelConfig(input.rawJson);
+      } catch (err: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: err.message });
+      }
+    }),
+
+  applyVercelMigration: protectedProcedure
+    .input(
+      z.object({
+        serviceId: z.string(),
+        rawJson: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertDevopsAccess(ctx.db, ctx.session.user.id, input.serviceId, ["OWNER", "MEMBER"]);
+      try {
+        const plan = parseVercelConfig(input.rawJson);
+        const result = applyVercelMigration(input.serviceId, plan);
+        return {
+          success: true,
+          plan,
+          result,
+        };
+      } catch (err: any) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: err.message });
+      }
     }),
 });

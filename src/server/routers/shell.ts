@@ -22,7 +22,18 @@ export const shellRouter = createTRPCRouter({
       const service = await ctx.db.service.findFirst({
         where: {
           id: input.serviceId,
-          environment: { project: { workspace: { members: { some: { userId: ctx.session.user.id } } } } },
+          environment: {
+            project: {
+              workspace: {
+                members: {
+                  some: {
+                    userId: ctx.session.user.id,
+                    role: { in: ["OWNER", "MEMBER"] },
+                  },
+                },
+              },
+            },
+          },
         },
         include: {
           variables: true,

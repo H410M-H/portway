@@ -67,7 +67,14 @@ export const domainRouter = createTRPCRouter({
           deletedAt: null,
           environment: {
             project: {
-              workspace: { members: { some: { userId: ctx.session.user.id } } },
+              workspace: {
+                members: {
+                  some: {
+                    userId: ctx.session.user.id,
+                    role: { in: ["OWNER", "MEMBER"] },
+                  },
+                },
+              },
             },
           },
         },

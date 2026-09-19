@@ -22,7 +22,18 @@ export const queryStudioRouter = createTRPCRouter({
       const dbInstance = await ctx.db.databaseInstance.findFirst({
         where: {
           id: input.databaseId,
-          environment: { project: { workspace: { members: { some: { userId: ctx.session.user.id } } } } },
+          environment: {
+            project: {
+              workspace: {
+                members: {
+                  some: {
+                    userId: ctx.session.user.id,
+                    role: { in: ["OWNER", "MEMBER"] },
+                  },
+                },
+              },
+            },
+          },
         },
       });
 

@@ -35,33 +35,138 @@ const rateWindowMap: Map<string, number[]> = new Map();
 const wafConfigsStore: Map<string, WafConfig> = new Map();
 const securityEventsStore: Map<string, SecurityEvent[]> = new Map();
 
+function parseIpv4ToInt(ip: string): number | null {
+  const parts = ip.trim().split(".");
+  if (parts.length !== 4) return null;
+  let num = 0;
+  for (const p of parts) {
+    if (!/^\d+$/.test(p)) return null;
+    const n = parseInt(p, 10);
+    if (n < 0 || n > 255) return null;
+    num = (num << 8) | n;
+  }
+  return num >>> 0;
+}
+
+function matchIpv4Cidr(ip: string, subnet: string, prefix: number): boolean {
+  if (prefix < 0 || prefix > 32) return false;
+  const ipInt = parseIpv4ToInt(ip);
+  const subInt = parseIpv4ToInt(subnet);
+  if (ipInt === null || subInt === null) return false;
+  if (prefix === 0) return true;
+  const mask = prefix === 32 ? 0xffffffff : ((-1 << (32 - prefix)) >>> 0);
+  return (ipInt & mask) === (subInt & mask);
+}
+
+function parseIpv6ToBigInt(ip: string): bigint | null {
+  const clean = ip.trim().split("%")[0];
+  if (!clean.includes(":")) return null;
+  if (clean.includes(":::")) return null;
+  if (clean.startsWith(":") && !clean.startsWith("::")) return null;
+  if (clean.endsWith(":") && !clean.endsWith("::")) return null;
+
+  const parts = clean.split("::");
+  if (parts.length > 2) return null;
+
+  const head = parts[0] ? parts[0].split(":") : [];
+  const tail = parts.length === 2 && parts[1] ? parts[1].split(":") : [];
+
+  if (head.some((w) => w === "") || tail.some((w) => w === "")) return null;
+
+  // Handle embedded IPv4 at the end (e.g. ::ffff:192.168.1.1 or ::192.168.1.1)
+  const target = parts.length === 2 ? tail : head;
+  if (target.length > 0 && target[target.length - 1].includes(".")) {
+    const ipv4 = target.pop()!;
+    const v4Parts = ipv4.split(".");
+    if (v4Parts.length !== 4) return null;
+    for (const p of v4Parts) {
+      if (!/^\d+$/.test(p)) return null;
+      const n = parseInt(p, 10);
+      if (n < 0 || n > 255) return null;
+    }
+    const n0 = parseInt(v4Parts[0], 10);
+    const n1 = parseInt(v4Parts[1], 10);
+    const n2 = parseInt(v4Parts[2], 10);
+    const n3 = parseInt(v4Parts[3], 10);
+    target.push(((n0 << 8) | n1).toString(16));
+    target.push(((n2 << 8) | n3).toString(16));
+  }
+
+  // If compressed with ::, total words cannot exceed 7 (:: must compress at least one word)
+  if (parts.length === 2 && head.length + tail.length > 7) return null;
+
+  const missing = 8 - (head.length + tail.length);
+  if (missing < 0) return null;
+  const middle = parts.length === 2 ? new Array(missing).fill("0") : [];
+  const fullWords = [...head, ...middle, ...tail];
+  if (fullWords.length !== 8) return null;
+
+  let result = BigInt(0);
+  for (const word of fullWords) {
+    if (!/^[0-9a-fA-F]{1,4}$/.test(word)) return null;
+    const num = parseInt(word, 16);
+    result = (result << BigInt(16)) | BigInt(num);
+  }
+  return result;
+}
+
+function matchIpv6Cidr(ip: string, subnet: string, prefix: number): boolean {
+  if (prefix < 0 || prefix > 128) return false;
+  const ipBig = parseIpv6ToBigInt(ip);
+  const subBig = parseIpv6ToBigInt(subnet);
+  if (ipBig === null || subBig === null) return false;
+  if (prefix === 0) return true;
+  if (prefix === 128) return ipBig === subBig;
+  const mask = ((BigInt(1) << BigInt(128)) - BigInt(1)) ^ ((BigInt(1) << BigInt(128 - prefix)) - BigInt(1));
+  return (ipBig & mask) === (subBig & mask);
+}
+
+// Max tracked IPs before triggering eviction sweep to prevent memory leak
+const MAX_RATE_WINDOW_ENTRIES = 5000;
+
+export function cleanupExpiredRateLimits(nowMs: number = Date.now(), windowMs: number = 60000) {
+  const cutoff = nowMs - windowMs;
+  for (const [keyIp, timestamps] of rateWindowMap.entries()) {
+    const valid = timestamps.filter((t) => t > cutoff);
+    if (valid.length === 0) {
+      rateWindowMap.delete(keyIp);
+    } else {
+      rateWindowMap.set(keyIp, valid);
+    }
+  }
+}
+
 /**
- * Checks if an IP matches an exact IP or CIDR block (supports /24, /16, /8)
+ * Checks if an IP matches an exact IP or CIDR block (supports arbitrary IPv4 /0-32 and IPv6 /0-128)
  */
 export function isIpInList(ip: string, list: string[]): boolean {
   if (!list || list.length === 0) return false;
   const cleanIp = ip.trim();
+  const ipV4 = parseIpv4ToInt(cleanIp);
+  const ipV6 = parseIpv6ToBigInt(cleanIp);
 
   for (const entry of list) {
     const cleanEntry = entry.trim();
+    if (!cleanEntry) continue;
     if (cleanEntry === cleanIp) return true;
+
+    // Check IPv6 exact match with different zero representation
+    if (ipV6 !== null && !cleanEntry.includes("/")) {
+      const entryV6 = parseIpv6ToBigInt(cleanEntry);
+      if (entryV6 !== null && entryV6 === ipV6) return true;
+    }
 
     if (cleanEntry.includes("/")) {
       const [subnet, prefixStr] = cleanEntry.split("/");
       const prefix = parseInt(prefixStr, 10);
-      const ipParts = cleanIp.split(".").map(Number);
-      const subParts = subnet.split(".").map(Number);
+      if (isNaN(prefix)) continue;
 
-      if (ipParts.length === 4 && subParts.length === 4) {
-        if (prefix === 24 && ipParts[0] === subParts[0] && ipParts[1] === subParts[1] && ipParts[2] === subParts[2]) {
-          return true;
-        }
-        if (prefix === 16 && ipParts[0] === subParts[0] && ipParts[1] === subParts[1]) {
-          return true;
-        }
-        if (prefix === 8 && ipParts[0] === subParts[0]) {
-          return true;
-        }
+      if (ipV4 !== null && subnet.includes(".")) {
+        if (matchIpv4Cidr(cleanIp, subnet, prefix)) return true;
+      }
+
+      if (ipV6 !== null && subnet.includes(":")) {
+        if (matchIpv6Cidr(cleanIp, subnet, prefix)) return true;
       }
     }
   }
@@ -77,6 +182,10 @@ export function evaluateRateLimit(
   windowMs: number = 60000,
   nowMs: number = Date.now()
 ): { allowed: boolean; currentCount: number; remaining: number; resetSec: number } {
+  if (rateWindowMap.size > MAX_RATE_WINDOW_ENTRIES) {
+    cleanupExpiredRateLimits(nowMs, windowMs);
+  }
+
   const cutoff = nowMs - windowMs;
   let timestamps = rateWindowMap.get(ip) || [];
 

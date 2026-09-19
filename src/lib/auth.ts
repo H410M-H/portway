@@ -67,47 +67,55 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user }) {
-      // Auto-create personal workspace on first sign-in — FR-AUTH-04
-      if (user.id) {
-        const existing = await db.workspace.findFirst({
-          where: {
-            members: { some: { userId: user.id } },
-            isPersonal: true,
-          },
-        });
-        if (!existing) {
-          const baseName = user.name ?? "user";
-          const slug = `${baseName
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "")
-            .slice(0, 24)}-${user.id.slice(0, 6)}`;
+      // Resolve the adapter-created record before creating related rows. OAuth
+      // providers may return a provider identifier while Prisma uses its own id.
+      const persistedUser = user.email
+        ? await db.user.findUnique({ where: { email: user.email } })
+        : null;
 
-          const workspace = await db.workspace.create({
-            data: {
-              name: user.name ?? "My Workspace",
-              slug,
-              isPersonal: true,
-              members: {
-                create: {
-                  userId: user.id,
-                  role: "OWNER",
-                },
+      if (!persistedUser) return false;
+      user.id = persistedUser.id;
+
+      // Auto-create personal workspace on first sign-in — FR-AUTH-04
+      const existing = await db.workspace.findFirst({
+        where: {
+          members: { some: { userId: persistedUser.id } },
+          isPersonal: true,
+        },
+      });
+      if (!existing) {
+        const baseName = persistedUser.name ?? "user";
+        const slug = `${baseName
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "")
+          .slice(0, 24)}-${persistedUser.id.slice(0, 6)}`;
+
+        const workspace = await db.workspace.create({
+          data: {
+            name: persistedUser.name ?? "My Workspace",
+            slug,
+            isPersonal: true,
+            members: {
+              create: {
+                user: { connect: { id: persistedUser.id } },
+                role: "OWNER",
               },
             },
-          });
+          },
+        });
 
-          // Append-only audit log — DR-04
-          await db.auditLogEntry.create({
-            data: {
-              workspaceId: workspace.id,
-              actorUserId: user.id,
-              action: "workspace.created",
-              metadata: { isPersonal: true },
-            },
-          });
-        }
+        // Append-only audit log — DR-04
+        await db.auditLogEntry.create({
+          data: {
+            workspaceId: workspace.id,
+            actorUserId: persistedUser.id,
+            action: "workspace.created",
+            metadata: { isPersonal: true },
+          },
+        });
       }
+
       return true;
     },
   },

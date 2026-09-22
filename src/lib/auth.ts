@@ -22,6 +22,14 @@ export const authOptions: NextAuthOptions = {
           scope: "read:user user:email repo",
         },
       },
+      profile(profile) {
+        return {
+          id: String(profile.id),
+          name: profile.name ?? profile.login ?? null,
+          email: profile.email ?? `${profile.id}+${profile.login}@users.noreply.github.com`,
+          image: profile.avatar_url,
+        };
+      },
     }),
     CredentialsProvider({
       name: "Email & Password",

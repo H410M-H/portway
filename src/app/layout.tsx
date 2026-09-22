@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { TRPCProvider } from "@/lib/trpc-client";
+import { Analytics } from "@vercel/analytics/next";
 
 function getBaseUrl() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
@@ -77,6 +78,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <TRPCProvider>{children}</TRPCProvider>
+        <Analytics />
       </body>
     </html>
   );

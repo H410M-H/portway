@@ -27,6 +27,7 @@
     "@trpc/react-query": "^11.13.0",
     "@trpc/server": "^11.13.0",
     "@types/bcryptjs": "^2.4.6",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "next": "16.3.4",
     "next-auth": "^4.24.11",

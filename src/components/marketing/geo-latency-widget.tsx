@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Globe3D } from "@/components/ui/globe-3d";
+import { TiltCard } from "@/components/ui/tilt-card";
 
 interface EdgeRegionPing {
   id: string;
@@ -22,83 +24,116 @@ export function GeoLatencyWidget() {
   useEffect(() => {
     fetch("/api/geo/locate")
       .then((res) => res.json())
-      .then((data) => {
-        setGeoData(data);
-        setLoading(false);
-      })
+      .then((data) => { setGeoData(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-black/80 backdrop-blur-xl p-6 shadow-2xl relative overflow-hidden">
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-zinc-800 pb-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <h4 className="text-sm font-bold text-white tracking-wide uppercase font-mono">
-              Live Edge Network Latency Probe
-            </h4>
-          </div>
-          <p className="text-xs text-zinc-400 mt-1">
-            Real-time ping from your browser to Syncbay&apos;s 6 Tier-1 Global Edge POPs
-          </p>
-        </div>
-
-        {geoData?.client && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-mono">
-            <span>📍 Detected:</span>
-            <span className="text-cyan-400 font-bold">
-              {geoData.client.city}, {geoData.client.country}
-            </span>
-            <span className="text-zinc-500">•</span>
-            <span className="text-emerald-400 font-bold">
-              ~{geoData.routing?.estimatedLatencyMs}ms ({geoData.routing?.activeRegion.id.toUpperCase()})
-            </span>
-          </div>
-        )}
+    <div className="space-y-8">
+      {/* Section Header */}
+      <div className="text-center max-w-2xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-3">
+          Global Edge Network
+        </h2>
+        <p className="text-sm" style={{ color: "#6b7280" }}>
+          6 Tier-1 Points of Presence. Your code runs where your users are.
+        </p>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-24 rounded-xl bg-zinc-900/50 animate-pulse border border-zinc-800" />
-          ))}
+      <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+        {/* 3D Globe */}
+        <div className="flex-shrink-0 relative">
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)",
+              filter: "blur(40px)",
+            }}
+          />
+          <Globe3D size={380} className="relative z-10" />
         </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
-          {geoData?.regions?.map((reg) => {
-            const isClosest = reg.id === geoData.routing?.activeRegion.id;
-            return (
-              <div
-                key={reg.id}
-                className={`p-3.5 rounded-xl border transition-all ${
-                  isClosest
-                    ? "border-cyan-500/60 bg-cyan-950/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
-                    : "border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-white uppercase">{reg.id}</span>
-                  {isClosest && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">
-                      CLOSEST
-                    </span>
-                  )}
-                </div>
-                <div className="text-[11px] text-zinc-400 truncate mb-2">{reg.name}</div>
-                <div className="text-lg font-black text-emerald-400">
-                  {reg.latencyMs} <span className="text-[10px] text-zinc-500 font-normal">ms</span>
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-1">
-                  {reg.distanceKm ? `${reg.distanceKm.toLocaleString()} km` : "Edge"}
-                </div>
-              </div>
-            );
-          })}
+
+        {/* Region Cards */}
+        <div className="flex-1 w-full">
+          {/* Detected Location Badge */}
+          {geoData?.client && (
+            <div
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono mb-4"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                color: "#94a3b8",
+              }}
+            >
+              <span>📍</span>
+              <span style={{ color: "#06B6D4" }}>
+                {geoData.client.city}, {geoData.client.country}
+              </span>
+              <span style={{ color: "#374151" }}>→</span>
+              <span style={{ color: "#22c55e" }}>
+                ~{geoData.routing?.estimatedLatencyMs}ms ({geoData.routing?.activeRegion.id.toUpperCase()})
+              </span>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-xl animate-pulse"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)" }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono">
+              {geoData?.regions?.map((reg) => {
+                const isClosest = reg.id === geoData.routing?.activeRegion.id;
+                return (
+                  <TiltCard
+                    key={reg.id}
+                    glowColor={isClosest ? "rgba(6,182,212,0.2)" : "rgba(124,58,237,0.1)"}
+                    intensity={10}
+                  >
+                    <div
+                      className="p-4 rounded-xl transition-all"
+                      style={{
+                        background: isClosest ? "rgba(6,182,212,0.05)" : "rgba(255,255,255,0.02)",
+                        border: `1px solid ${isClosest ? "rgba(6,182,212,0.3)" : "rgba(255,255,255,0.06)"}`,
+                        boxShadow: isClosest ? "0 0 20px rgba(6,182,212,0.1)" : "none",
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-white uppercase">{reg.id}</span>
+                        {isClosest && (
+                          <span
+                            className="text-[9px] px-2 py-0.5 rounded-full font-bold"
+                            style={{
+                              background: "rgba(6,182,212,0.15)",
+                              color: "#06B6D4",
+                              border: "1px solid rgba(6,182,212,0.25)",
+                            }}
+                          >
+                            NEAREST
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] mb-2" style={{ color: "#6b7280" }}>
+                        {reg.name}
+                      </div>
+                      <div className="text-xl font-black" style={{ color: "#22c55e" }}>
+                        {reg.latencyMs}
+                        <span className="text-[10px] font-normal ml-0.5" style={{ color: "#4b5563" }}>ms</span>
+                      </div>
+                    </div>
+                  </TiltCard>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

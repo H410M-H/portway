@@ -1,126 +1,231 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
-interface LandingHeroProps {
-  onThemeChange?: (theme: "cyber" | "matrix" | "synthwave" | "aurora") => void;
-  activeTheme?: "cyber" | "matrix" | "synthwave" | "aurora";
-}
-
 const TERMINAL_LOGS = [
-  { text: "$ syncbay up --project cloud-edge", color: "text-zinc-300", delay: 0 },
-  { text: "⚡ [syncbay] Analyzing repository structure...", color: "text-cyan-400", delay: 300 },
-  { text: "✔ [nixpacks] Detected runtime: Node.js 20 (Next.js 16 App Router)", color: "text-emerald-400", delay: 700 },
-  { text: "✔ [database] Attached Managed Postgres: ${{ Postgres.URL }}", color: "text-emerald-400", delay: 1100 },
-  { text: "🚀 [build] Ephemeral build container active (0 cold start)", color: "text-cyan-300", delay: 1500 },
-  { text: "✔ [build] Container image pushed: registry.syncbay.edge/cloud-edge:v1", color: "text-emerald-400", delay: 2000 },
-  { text: "🌍 [deploy] Routing to 6 Edge POPs: [iad1, sfo1, fra1, lhr1, sin1, syd1]", color: "text-purple-400", delay: 2400 },
-  { text: "✔ [healthcheck] HTTP /health passed (200 OK, 12ms)", color: "text-emerald-400", delay: 2800 },
-  { text: "✨ [active] Live at https://cloud-edge.syncbay.app", color: "text-yellow-300 font-bold", delay: 3200 },
+  { text: "$ syncbay up --project cloud-edge", color: "#e2e8f0", delay: 0 },
+  { text: "⚡ Analyzing repository structure...", color: "#06B6D4", delay: 400 },
+  { text: "✔ Detected: Node.js 20 (Next.js 16 App Router)", color: "#22c55e", delay: 900 },
+  { text: "✔ Attached Managed Postgres: ${{ Postgres.URL }}", color: "#22c55e", delay: 1400 },
+  { text: "🚀 Ephemeral build container active (0ms cold start)", color: "#06B6D4", delay: 1900 },
+  { text: "✔ Image pushed: registry.syncbay.edge/cloud-edge:v1", color: "#22c55e", delay: 2400 },
+  { text: "🌍 Routing to 6 POPs: [iad1, sfo1, fra1, lhr1, sin1, syd1]", color: "#a78bfa", delay: 2900 },
+  { text: "✔ Healthcheck passed (200 OK, 12ms)", color: "#22c55e", delay: 3400 },
+  { text: "✨ Live → https://cloud-edge.syncbay.app", color: "#fbbf24", delay: 3900 },
 ];
 
-export function LandingHero({ onThemeChange, activeTheme = "cyber" }: LandingHeroProps) {
-  const [copied, setCopied] = useState(false);
+const STATS = [
+  { label: "Global Edge POPs", value: "6", suffix: "regions" },
+  { label: "Cold Start Time", value: "0", suffix: "ms" },
+  { label: "Deploy Speed", value: "<30", suffix: "seconds" },
+  { label: "Uptime SLA", value: "99.99", suffix: "%" },
+];
 
-  const copyCliCommand = () => {
+export function LandingHero() {
+  const [copied, setCopied] = useState(false);
+  const [visibleLogs, setVisibleLogs] = useState(0);
+  const terminalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timers = TERMINAL_LOGS.map((log, i) =>
+      setTimeout(() => setVisibleLogs(i + 1), log.delay + 500)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const copyCmd = () => {
     navigator.clipboard.writeText("npm i -g syncbay && syncbay up");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <section className="relative z-10 pt-16 pb-20 px-4 max-w-7xl mx-auto flex flex-col items-center text-center">
-      {/* Top Banner Tag & ASCII Theme Switcher */}
-      <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 backdrop-blur-md text-cyan-300 text-xs font-mono font-semibold">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          SYNCBAY CLOUD HYPER-PLANE v2.0
+    <section className="relative z-10 pt-20 sm:pt-28 pb-20 px-4 max-w-7xl mx-auto">
+      {/* Badge */}
+      <div className="flex justify-center mb-8">
+        <div
+          className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full text-xs font-semibold tracking-wide"
+          style={{
+            background: "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(124,58,237,0.1))",
+            border: "1px solid rgba(6,182,212,0.2)",
+            color: "#67e8f9",
+          }}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+          </span>
+          SYNCBAY CLOUD HYPER-PLANE v2.0 — Now Live
         </div>
-
-        {onThemeChange && (
-          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-zinc-800 bg-black/60 backdrop-blur-md text-[11px] font-mono text-zinc-400">
-            <span className="text-zinc-500 mr-1">ASCII Glow:</span>
-            {(["cyber", "matrix", "synthwave", "aurora"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => onThemeChange(t)}
-                className={`px-2 py-0.5 rounded capitalize transition-all ${
-                  activeTheme === t
-                    ? "bg-zinc-800 text-white font-bold"
-                    : "hover:text-zinc-200"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Main Headline */}
-      <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white max-w-5xl leading-[1.08] mb-6 font-sans">
-        Deploy in Seconds. <br />
-        <span className="bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent">
-          The Edge Cloud Hyper-Plane.
+      {/* Headline */}
+      <h1
+        className="text-center text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] mb-6"
+        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+      >
+        <span className="text-white">Deploy in Seconds.</span>
+        <br />
+        <span
+          style={{
+            background: "linear-gradient(135deg, #06B6D4 0%, #7C3AED 40%, #EC4899 70%, #F59E0B 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Scale Without Limits.
         </span>
       </h1>
 
       {/* Subtitle */}
-      <p className="text-base sm:text-lg md:text-xl text-zinc-400 max-w-3xl leading-relaxed mb-10">
-        Syncbay is the developer PaaS designed to dethrone Vercel and Railway. Deploy any Dockerfile or Nixpacks codebase to 6 global edge POPs with zero cold starts, attached managed PostgreSQL, interactive Web Shell, and built-in SQL Query Studio.
+      <p className="text-center text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-12 leading-relaxed" style={{ color: "#94a3b8" }}>
+        The next-generation PaaS that outperforms Vercel and Railway. Deploy any codebase to 6 global
+        edge POPs with zero cold starts, managed PostgreSQL, interactive Web Shell, and built-in SQL Studio.
       </p>
 
-      {/* Primary Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-12 w-full sm:w-auto">
+      {/* CTA Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
         <Link
           href="/auth/signin"
-          className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-sm shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:-translate-y-0.5"
+          className="group relative w-full sm:w-auto"
         >
-          🚀 Launch Project in 30s (Free)
+          <div
+            className="absolute -inset-0.5 rounded-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-300 blur-sm"
+            style={{ background: "linear-gradient(135deg, #06B6D4, #7C3AED, #EC4899)" }}
+          />
+          <div
+            className="relative px-8 py-4 rounded-xl font-extrabold text-sm text-center transition-all"
+            style={{
+              background: "linear-gradient(135deg, #06B6D4, #3B82F6)",
+              color: "#000",
+            }}
+          >
+            🚀 Start Deploying Free — 30 Seconds
+          </div>
         </Link>
 
-        <div className="flex items-center bg-black/80 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-mono text-zinc-300 shadow-xl">
-          <span className="text-zinc-500 mr-2">$</span>
-          <code>npm i -g syncbay && syncbay up</code>
+        <div
+          className="flex items-center gap-3 px-5 py-3.5 rounded-xl text-xs font-mono"
+          style={{
+            background: "rgba(15,15,25,0.8)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(12px)",
+            color: "#94a3b8",
+          }}
+        >
+          <span style={{ color: "#4b5563" }}>$</span>
+          <code style={{ color: "#e2e8f0" }}>npm i -g syncbay && syncbay up</code>
           <button
             type="button"
-            onClick={copyCliCommand}
-            className="ml-3 px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded text-[11px] font-semibold transition-colors"
+            onClick={copyCmd}
+            className="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              color: copied ? "#22c55e" : "#94a3b8",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
           >
             {copied ? "Copied!" : "Copy"}
           </button>
         </div>
       </div>
 
-      {/* Interactive Live Simulated Terminal */}
-      <div className="w-full max-w-3xl rounded-2xl border border-zinc-800 bg-black/90 backdrop-blur-2xl shadow-2xl overflow-hidden text-left font-mono text-xs">
-        {/* Terminal Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/80 border-b border-zinc-800">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-            <div className="w-3 h-3 rounded-full bg-green-500/80" />
-            <span className="ml-2 text-zinc-400 font-semibold text-[11px]">
-              syncbay-cli — fast-edge-deploy
-            </span>
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-16">
+        {STATS.map((stat) => (
+          <div
+            key={stat.label}
+            className="text-center p-4 rounded-2xl"
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <div className="text-3xl sm:text-4xl font-black" style={{ color: "#06B6D4" }}>
+              {stat.value}
+              <span className="text-sm font-medium ml-1" style={{ color: "#6b7280" }}>
+                {stat.suffix}
+              </span>
+            </div>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {stat.label}
+            </div>
           </div>
-          <span className="text-[10px] text-zinc-500">6 Global Edge POPs Active</span>
+        ))}
+      </div>
+
+      {/* 3D Terminal */}
+      <div className="max-w-4xl mx-auto" style={{ perspective: "1200px" }}>
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            transform: "rotateX(4deg)",
+            transformStyle: "preserve-3d",
+            background: "rgba(8, 8, 18, 0.9)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 25px 60px -12px rgba(0,0,0,0.8), 0 0 40px rgba(6,182,212,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}
+        >
+          {/* Terminal Header */}
+          <div
+            className="flex items-center justify-between px-5 py-3"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ background: "#ef4444" }} />
+              <div className="w-3 h-3 rounded-full" style={{ background: "#f59e0b" }} />
+              <div className="w-3 h-3 rounded-full" style={{ background: "#22c55e" }} />
+              <span className="ml-3 text-[11px] font-semibold font-mono" style={{ color: "#6b7280" }}>
+                syncbay-cli — deployment
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "#4b5563" }}>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                6 Edge POPs Online
+              </span>
+            </div>
+          </div>
+
+          {/* Terminal Body */}
+          <div ref={terminalRef} className="p-6 font-mono text-[13px] space-y-1.5 min-h-[280px]">
+            {TERMINAL_LOGS.slice(0, visibleLogs).map((log, idx) => (
+              <div
+                key={idx}
+                className="leading-relaxed"
+                style={{
+                  color: log.color,
+                  animation: "fadeSlideIn 0.3s ease-out forwards",
+                  fontWeight: idx === TERMINAL_LOGS.length - 1 ? 700 : 400,
+                }}
+              >
+                {log.text}
+              </div>
+            ))}
+            {visibleLogs >= TERMINAL_LOGS.length && (
+              <div className="flex items-center pt-3" style={{ color: "#4b5563" }}>
+                <span
+                  className="inline-block w-2 h-5 mr-2"
+                  style={{ background: "#06B6D4", animation: "blink 1s step-end infinite" }}
+                />
+                Ready for production traffic across all POPs...
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Terminal Output */}
-        <div className="p-5 space-y-2 select-text">
-          {TERMINAL_LOGS.map((log, idx) => (
-            <div key={idx} className={`leading-relaxed ${log.color}`}>
-              {log.text}
-            </div>
-          ))}
-          <div className="flex items-center text-zinc-500 pt-2">
-            <span className="inline-block w-2 h-4 bg-cyan-400 animate-pulse mr-2" />
-            <span>Ready for incoming production traffic across all POPs...</span>
-          </div>
-        </div>
+        {/* Terminal reflection */}
+        <div
+          className="h-16 rounded-b-2xl mx-4"
+          style={{
+            background: "linear-gradient(to bottom, rgba(6,182,212,0.04), transparent)",
+            filter: "blur(8px)",
+            transform: "scaleY(-0.3) translateY(-20px)",
+          }}
+        />
       </div>
     </section>
   );

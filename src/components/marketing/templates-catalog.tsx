@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { TiltCard } from "@/components/ui/tilt-card";
 
 interface Template {
   id: string;
@@ -11,6 +12,7 @@ interface Template {
   icon: string;
   stars: string;
   tags: string[];
+  gradient: string;
 }
 
 const TEMPLATES: Template[] = [
@@ -22,6 +24,7 @@ const TEMPLATES: Template[] = [
     icon: "▲",
     stars: "14.2k",
     tags: ["React 19", "Prisma", "Postgres", "Tailwind"],
+    gradient: "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(59,130,246,0.08))",
   },
   {
     id: "fastapi-redis",
@@ -31,6 +34,7 @@ const TEMPLATES: Template[] = [
     icon: "⚡",
     stars: "9.8k",
     tags: ["FastAPI", "Redis", "Pydantic", "Uvicorn"],
+    gradient: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(236,72,153,0.08))",
   },
   {
     id: "go-fiber",
@@ -40,15 +44,17 @@ const TEMPLATES: Template[] = [
     icon: "🐹",
     stars: "7.4k",
     tags: ["Go", "Fiber", "Microservices", "Docker"],
+    gradient: "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(6,182,212,0.08))",
   },
   {
     id: "rust-axum",
     title: "Rust Axum Edge Worker",
-    description: "Memory-safe, high-concurrency API server built on Tokio, Tower, and Hyper with zero garbage collection.",
+    description: "Memory-safe, high-concurrency API server built on Tokio, Tower, and Hyper with zero GC.",
     runtime: "Rust 1.78",
     icon: "🦀",
     stars: "6.1k",
     tags: ["Rust", "Axum", "Tokio", "High-Perf"],
+    gradient: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08))",
   },
   {
     id: "node-express-ws",
@@ -58,6 +64,7 @@ const TEMPLATES: Template[] = [
     icon: "🟢",
     stars: "5.3k",
     tags: ["Express", "WebSocket", "Realtime", "API"],
+    gradient: "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(52,211,153,0.08))",
   },
   {
     id: "rails-postgres",
@@ -67,76 +74,123 @@ const TEMPLATES: Template[] = [
     icon: "💎",
     stars: "4.9k",
     tags: ["Rails 8", "Postgres", "Sidekiq", "Hotwire"],
+    gradient: "linear-gradient(135deg, rgba(239,68,68,0.12), rgba(236,72,153,0.08))",
   },
 ];
 
 export function TemplatesCatalog() {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-white tracking-tight">
-            1-Click Deploy Starter Templates
-          </h3>
-          <p className="text-xs text-zinc-400 mt-1">
-            Jumpstart your next project with pre-configured Dockerfile, Nixpacks plans, and attached databases.
-          </p>
-        </div>
-
-        <Link
-          href="/dashboard"
-          className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold font-mono flex items-center gap-1 self-start md:self-auto"
-        >
-          View all 48 templates →
-        </Link>
+    <div className="space-y-8">
+      {/* Section Header */}
+      <div className="text-center max-w-2xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-3">
+          One-Click Deploy Templates
+        </h2>
+        <p className="text-sm" style={{ color: "#6b7280" }}>
+          Pre-configured starter kits with Dockerfile, Nixpacks, and databases ready to launch.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {TEMPLATES.map((tpl) => (
-          <div
+          <TiltCard
             key={tpl.id}
-            className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5 hover:border-zinc-700 hover:bg-zinc-900/40 transition-all flex flex-col justify-between group"
+            glowColor={tpl.gradient.includes("cyan") ? "rgba(6,182,212,0.12)" : "rgba(124,58,237,0.12)"}
+            intensity={12}
           >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-lg">
-                  {tpl.icon}
-                </div>
-                <span className="text-[10px] text-zinc-500 font-mono">
-                  ⭐ {tpl.stars}
-                </span>
-              </div>
-
-              <h4 className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors mb-1.5">
-                {tpl.title}
-              </h4>
-              <p className="text-xs text-zinc-400 leading-relaxed mb-4">
-                {tpl.description}
-              </p>
-            </div>
-
-            <div>
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {tpl.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[10px] px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono"
+            <div
+              className="h-full p-5 rounded-xl flex flex-col justify-between group"
+              style={{
+                background: tpl.gradient,
+                border: "1px solid rgba(255,255,255,0.06)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <div>
+                {/* Icon + Stars */}
+                <div className="flex items-center justify-between mb-4">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
                   >
-                    {tag}
+                    {tpl.icon}
+                  </div>
+                  <span className="text-[10px] font-mono" style={{ color: "#6b7280" }}>
+                    ⭐ {tpl.stars}
                   </span>
-                ))}
+                </div>
+
+                {/* Title + Description */}
+                <h4
+                  className="text-sm font-bold mb-1.5 transition-colors"
+                  style={{ color: "#f1f5f9" }}
+                >
+                  {tpl.title}
+                </h4>
+                <p className="text-xs leading-relaxed mb-4" style={{ color: "#94a3b8" }}>
+                  {tpl.description}
+                </p>
               </div>
 
-              <Link
-                href={`/auth/signin?template=${tpl.id}`}
-                className="w-full py-2 px-3 rounded-lg bg-zinc-900 hover:bg-cyan-500 hover:text-black border border-zinc-700 hover:border-cyan-400 text-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-              >
-                <span>Deploy Template</span>
-                <span>→</span>
-              </Link>
+              <div>
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {tpl.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] px-2 py-0.5 rounded-md font-mono"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        color: "#94a3b8",
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Deploy Button */}
+                <Link
+                  href={`/auth/signin?template=${tpl.id}`}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "#e2e8f0",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(6,182,212,0.2)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(6,182,212,0.4)";
+                    (e.currentTarget as HTMLElement).style.color = "#06B6D4";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
+                    (e.currentTarget as HTMLElement).style.color = "#e2e8f0";
+                  }}
+                >
+                  <span>Deploy Template</span>
+                  <span>→</span>
+                </Link>
+              </div>
             </div>
-          </div>
+          </TiltCard>
         ))}
+      </div>
+
+      {/* View All Link */}
+      <div className="text-center">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-xs font-mono font-semibold transition-colors"
+          style={{ color: "#06B6D4" }}
+        >
+          Browse all 48 templates →
+        </Link>
       </div>
     </div>
   );

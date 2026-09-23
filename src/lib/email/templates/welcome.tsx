@@ -10,7 +10,7 @@ export const WelcomeEmail = ({ name = 'User', loginUrl = 'https://syncbay.app/lo
   return (
     <Html>
       <Head />
-      <Preview>Welcome to SyncBay, {name}!</Preview>
+      <Preview>{`Welcome to SyncBay, ${name}!`}</Preview>
       <Tailwind>
         <Body className="bg-[#09090b] text-[#fafafa] font-sans">
           <Container className="mx-auto p-4 max-w-2xl">

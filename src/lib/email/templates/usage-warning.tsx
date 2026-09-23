@@ -22,7 +22,7 @@ export const UsageWarningEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Action Required: {percentage}% usage reached for {metricName}</Preview>
+      <Preview>{`Action Required: ${percentage}% usage reached for ${metricName}`}</Preview>
       <Tailwind>
         <Body className="bg-[#09090b] text-[#fafafa] font-sans">
           <Container className="mx-auto p-4 max-w-2xl">

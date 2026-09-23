@@ -17,7 +17,7 @@ export const BillingAlertEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Your recent invoice from SyncBay: {amount}</Preview>
+      <Preview>{`Your recent invoice from SyncBay: ${amount}`}</Preview>
       <Tailwind>
         <Body className="bg-[#09090b] text-[#fafafa] font-sans">
           <Container className="mx-auto p-4 max-w-2xl">

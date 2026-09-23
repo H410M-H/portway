@@ -17,7 +17,7 @@ export const InvitationEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Join {teamName} on SyncBay</Preview>
+      <Preview>{`Join ${teamName} on SyncBay`}</Preview>
       <Tailwind>
         <Body className="bg-[#09090b] text-[#fafafa] font-sans">
           <Container className="mx-auto p-4 max-w-2xl">

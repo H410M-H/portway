@@ -24,7 +24,7 @@ export const DeploymentNotificationEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Deployment {isSuccess ? 'Successful' : 'Failed'} for {projectName}</Preview>
+      <Preview>{`Deployment ${isSuccess ? 'Successful' : 'Failed'} for ${projectName}`}</Preview>
       <Tailwind>
         <Body className="bg-[#09090b] text-[#fafafa] font-sans">
           <Container className="mx-auto p-4 max-w-2xl">

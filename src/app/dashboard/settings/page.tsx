@@ -5,12 +5,23 @@ import Link from "next/link";
 import { trpc } from "@/lib/trpc-client";
 import { ApiTokenScope } from "@prisma/client";
 import { useDashboard } from "../dashboard-shell";
+import { signIn } from "next-auth/react";
 
 export default function SettingsPage() {
   const dashboard = useDashboard();
   const { data: fetchedWorkspaces, isLoading: wsLoading } = trpc.workspace.list.useQuery();
   const workspaces = dashboard?.workspaces || fetchedWorkspaces;
   const [selectedWsId, setSelectedWsId] = useState<string>("");
+
+  // GitHub connection status & PAT state
+  const { data: ghStatus, isLoading: ghLoading, refetch: refetchGhStatus } = trpc.github.getConnectionStatus.useQuery();
+  const connectPatMutation = trpc.github.connectPersonalAccessToken.useMutation();
+  const disconnectGhMutation = trpc.github.disconnect.useMutation();
+  const [patInput, setPatInput] = useState("");
+  const [patError, setPatError] = useState("");
+  const [patSuccess, setPatSuccess] = useState("");
+  const [showPatInput, setShowPatInput] = useState(false);
+  const [isConnectingPat, setIsConnectingPat] = useState(false);
 
   const activeWorkspace =
     workspaces?.find((w) => w.id === (selectedWsId || dashboard?.currentWorkspace?.id)) ||
@@ -222,11 +233,32 @@ export default function SettingsPage() {
           <div>
             <h3 style={{ marginBottom: "6px" }}>GitHub Integration</h3>
             <p style={{ fontSize: "0.875rem" }}>
-              Automates CI/CD webhooks, Nixpacks buildpack detection, and PR preview environments.
+              Connect your GitHub account to import repositories, auto-trigger deployments via webhooks, and preview pull requests.
             </p>
           </div>
-          <span className="badge badge-active">Connected</span>
+          {ghLoading ? (
+            <span className="badge badge-queued">Checking...</span>
+          ) : ghStatus?.isConnected ? (
+            <span className="badge badge-active" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}></span>
+              Connected as @{ghStatus.username}
+            </span>
+          ) : (
+            <span className="badge badge-failed">Not Connected</span>
+          )}
         </div>
+
+        {patSuccess && (
+          <div style={{ padding: "10px 14px", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.35)", color: "#6ee7b7", borderRadius: "var(--radius-sm)", fontSize: "0.875rem", marginBottom: "16px" }}>
+            {patSuccess}
+          </div>
+        )}
+
+        {patError && (
+          <div style={{ padding: "10px 14px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.35)", color: "#fca5a5", borderRadius: "var(--radius-sm)", fontSize: "0.875rem", marginBottom: "16px" }}>
+            {patError}
+          </div>
+        )}
 
         <div
           style={{
@@ -237,29 +269,133 @@ export default function SettingsPage() {
             background: "var(--bg-overlay)",
             borderRadius: "var(--radius-md)",
             border: "1px solid var(--border-subtle)",
+            flexWrap: "wrap",
+            gap: "12px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{ fontSize: "28px" }}>🐙</div>
+            {ghStatus?.avatarUrl ? (
+              <img
+                src={ghStatus.avatarUrl}
+                alt={ghStatus.username || "GitHub Avatar"}
+                style={{ width: "36px", height: "36px", borderRadius: "50%", border: "1px solid var(--border-subtle)" }}
+              />
+            ) : (
+              <div style={{ fontSize: "28px" }}>🐙</div>
+            )}
             <div>
-              <div style={{ fontWeight: 600, fontSize: "0.9375rem" }}>GitHub App &amp; OAuth</div>
+              <div style={{ fontWeight: 600, fontSize: "0.9375rem" }}>
+                {ghStatus?.isConnected ? `GitHub Account: @${ghStatus.username}` : "GitHub Not Connected"}
+              </div>
               <div style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                Repository webhook events (`push`, `pull_request`) active.
+                {ghStatus?.isConnected
+                  ? `Repository access authorized (${ghStatus.hasRepoScope ? "Full Repo Scope" : "User Scope"}). Automatic push webhooks active.`
+                  : "Connect your GitHub account or paste a Personal Access Token (PAT) with repo access."}
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "10px" }}>
-            <a
-              href="https://github.com/settings/installations"
-              target="_blank"
-              rel="noreferrer"
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => signIn("github", { callbackUrl: typeof window !== "undefined" ? window.location.href : "/dashboard/settings" })}
               className="btn btn-secondary btn-sm"
             >
-              Manage on GitHub ↗
-            </a>
+              {ghStatus?.isConnected ? "Reconnect OAuth" : "Connect with OAuth"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPatInput(!showPatInput);
+                setPatError("");
+                setPatSuccess("");
+              }}
+              className="btn btn-ghost btn-sm"
+            >
+              {showPatInput ? "Cancel" : "Use Access Token (PAT)"}
+            </button>
+            {ghStatus?.isConnected && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (confirm("Disconnect GitHub account? Stored tokens will be removed.")) {
+                    await disconnectGhMutation.mutateAsync();
+                    await refetchGhStatus();
+                  }
+                }}
+                disabled={disconnectGhMutation.isPending}
+                className="btn btn-ghost btn-sm"
+                style={{ color: "var(--status-crashed)" }}
+              >
+                Disconnect
+              </button>
+            )}
           </div>
         </div>
+
+        {showPatInput && (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!patInput.trim()) return;
+              setPatError("");
+              setPatSuccess("");
+              setIsConnectingPat(true);
+              try {
+                const res = await connectPatMutation.mutateAsync({ token: patInput.trim() });
+                setPatSuccess(`Successfully connected to GitHub as @${res.username}!`);
+                setPatInput("");
+                setShowPatInput(false);
+                await refetchGhStatus();
+              } catch (err: any) {
+                setPatError(err.message || "Failed to validate GitHub token.");
+              } finally {
+                setIsConnectingPat(false);
+              }
+            }}
+            style={{
+              marginTop: "16px",
+              padding: "16px",
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-emphasis)",
+              borderRadius: "var(--radius-md)",
+            }}
+          >
+            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, marginBottom: "6px" }}>
+              GitHub Personal Access Token (Classic or Fine-Grained)
+            </label>
+            <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "12px" }}>
+              Create a token in{" "}
+              <a
+                href="https://github.com/settings/tokens"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "var(--brand-primary)", textDecoration: "underline" }}
+              >
+                GitHub Settings → Developer Settings → Personal access tokens
+              </a>{" "}
+              with the <code>repo</code> and <code>read:user</code> permissions.
+            </p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <input
+                type="password"
+                className="input"
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                value={patInput}
+                onChange={(e) => setPatInput(e.target.value)}
+                style={{ flex: 1, fontFamily: "monospace", fontSize: "0.875rem" }}
+              />
+              <button
+                type="submit"
+                disabled={isConnectingPat || !patInput.trim()}
+                className="btn btn-primary btn-sm"
+                style={{ minWidth: "120px", justifyContent: "center" }}
+              >
+                {isConnectingPat ? "Verifying..." : "Save Token"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* ── Section 3: API Access Tokens ── */}

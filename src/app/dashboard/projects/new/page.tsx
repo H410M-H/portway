@@ -4,6 +4,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -19,8 +20,16 @@ export default function NewProjectPage() {
   // Fetch workspaces (to know where to put the project)
   const { data: workspaces, isLoading: loadingWs } = trpc.workspace.list.useQuery();
 
-  // Fetch user's GitHub repos (or demo starter templates if GitHub isn't connected)
-  const { data: repos, isLoading: loadingRepos, error: reposError } = trpc.github.listRepos.useQuery();
+  // Fetch user's GitHub repos & connection status
+  const { data: repos, isLoading: loadingRepos, error: reposError, refetch: refetchRepos } = trpc.github.listRepos.useQuery();
+  const { data: ghStatus, isLoading: loadingGhStatus, refetch: refetchGhStatus } = trpc.github.getConnectionStatus.useQuery();
+
+  // PAT connection state
+  const connectPatMutation = trpc.github.connectPersonalAccessToken.useMutation();
+  const [patInput, setPatInput] = useState("");
+  const [patError, setPatError] = useState("");
+  const [isConnectingPat, setIsConnectingPat] = useState(false);
+  const [showPatInline, setShowPatInline] = useState(false);
 
   // Mutations
   const createProject = trpc.project.create.useMutation();
@@ -224,13 +233,23 @@ export default function NewProjectPage() {
               </svg>
               GitHub Repositories
             </h3>
-            <Link
-              href="/dashboard/settings"
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: "0.75rem" }}
-            >
-              GitHub Settings ↗
-            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {loadingGhStatus ? (
+                <span className="badge badge-queued">Checking...</span>
+              ) : ghStatus?.isConnected ? (
+                <span className="badge badge-active" style={{ fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981", display: "inline-block" }}></span>
+                  @{ghStatus.username}
+                </span>
+              ) : null}
+              <Link
+                href="/dashboard/settings"
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: "0.75rem" }}
+              >
+                GitHub Settings ↗
+              </Link>
+            </div>
           </div>
 
           <div
@@ -242,10 +261,86 @@ export default function NewProjectPage() {
               fontSize: "0.8125rem",
               color: "var(--text-secondary)",
               marginBottom: "16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
             }}
           >
-            Import a repository from your connected GitHub account to build and deploy with Syncbay.
+            <span>
+              {ghStatus?.isConnected
+                ? `Showing repositories for @${ghStatus.username}. Click deploy to provision a project.`
+                : "Import a repository from your connected GitHub account to build and deploy with Syncbay."}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowPatInline(!showPatInline)}
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize: "0.75rem", padding: "2px 8px" }}
+            >
+              {showPatInline ? "Hide Token Input" : "Paste GitHub Token (PAT)"}
+            </button>
           </div>
+
+          {showPatInline && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!patInput.trim()) return;
+                setPatError("");
+                setIsConnectingPat(true);
+                try {
+                  await connectPatMutation.mutateAsync({ token: patInput.trim() });
+                  setPatInput("");
+                  setShowPatInline(false);
+                  await refetchGhStatus();
+                  await refetchRepos();
+                } catch (err: any) {
+                  setPatError(err.message || "Failed to validate GitHub token.");
+                } finally {
+                  setIsConnectingPat(false);
+                }
+              }}
+              style={{
+                marginBottom: "16px",
+                padding: "14px",
+                background: "var(--bg-overlay)",
+                border: "1px solid var(--border-emphasis)",
+                borderRadius: "var(--radius-md)",
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "4px" }}>
+                Connect via GitHub Personal Access Token (PAT)
+              </div>
+              <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", marginBottom: "10px" }}>
+                Provide a GitHub PAT with <code>repo</code> permissions to instantly fetch and import your repositories.
+              </p>
+              {patError && (
+                <div style={{ padding: "8px 12px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.35)", color: "#fca5a5", borderRadius: "var(--radius-sm)", fontSize: "0.8125rem", marginBottom: "10px" }}>
+                  {patError}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  type="password"
+                  className="input"
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={patInput}
+                  onChange={(e) => setPatInput(e.target.value)}
+                  style={{ flex: 1, fontFamily: "monospace", fontSize: "0.875rem" }}
+                />
+                <button
+                  type="submit"
+                  disabled={isConnectingPat || !patInput.trim()}
+                  className="btn btn-primary btn-sm"
+                  style={{ minWidth: "120px", justifyContent: "center" }}
+                >
+                  {isConnectingPat ? "Verifying..." : "Save & Fetch"}
+                </button>
+              </div>
+            </form>
+          )}
 
           {loadingRepos ? (
             <div style={{ textAlign: "center", padding: "40px" }}>
@@ -257,12 +352,25 @@ export default function NewProjectPage() {
               <div className="empty-icon">🐙</div>
               <h3>No GitHub repositories found</h3>
               <p style={{ color: "var(--text-secondary)", marginBottom: "16px" }}>
-                Connect your GitHub account with repository permissions to deploy, or deploy directly via Custom Git URL.
+                {ghStatus?.isConnected
+                  ? "Your GitHub account is connected but no repositories were found, or the token needs repo permissions."
+                  : "Connect your GitHub account or paste a Personal Access Token to list your repositories."}
               </p>
-              <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-                <Link href="/auth/signin" className="btn btn-secondary btn-sm">
-                  Connect GitHub
-                </Link>
+              <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => signIn("github", { callbackUrl: typeof window !== "undefined" ? window.location.href : "/dashboard/projects/new" })}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Connect with GitHub (OAuth)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPatInline(true)}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Enter GitHub Token (PAT)
+                </button>
                 <button onClick={() => setActiveTab("custom")} className="btn btn-primary btn-sm">
                   Deploy Custom Git URL
                 </button>

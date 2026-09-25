@@ -40,16 +40,22 @@ export async function POST(req: Request) {
 
   // Handle push event
   if (eventName === "push") {
-    const repoUrl = payload.repository.html_url; // e.g., https://github.com/H410M-H/syncbay
+    const rawRepoUrl = payload.repository.html_url || ""; // e.g., https://github.com/H410M-H/syncbay
+    const normalizedRepoUrl = rawRepoUrl.replace(/\/$/, "").replace(/\.git$/, "");
     const branchRef = payload.ref; // e.g., refs/heads/main
     const branch = branchRef.replace("refs/heads/", "");
     const commitSha = payload.after;
     const commitMessage = payload.head_commit?.message?.split("\n")[0] || "Update from GitHub";
 
-    // Find services linked to this repo and branch
+    // Find services linked to this repo and branch (robust to .git and trailing slash variants)
     const services = await db.service.findMany({
       where: {
-        repoUrl: repoUrl,
+        OR: [
+          { repoUrl: normalizedRepoUrl },
+          { repoUrl: `${normalizedRepoUrl}.git` },
+          { repoUrl: `${normalizedRepoUrl}/` },
+          { repoUrl: rawRepoUrl },
+        ],
         branch: branch,
         sourceType: "github",
         isPaused: false,

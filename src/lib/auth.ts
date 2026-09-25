@@ -22,6 +22,34 @@ export const authOptions: NextAuthOptions = {
           scope: "read:user user:email repo",
         },
       },
+      token: {
+        url: "https://github.com/login/oauth/access_token",
+        async request({ params, provider }) {
+          const res = await fetch("https://github.com/login/oauth/access_token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              client_id: provider.clientId,
+              client_secret: provider.clientSecret,
+              code: params.code,
+              redirect_uri: provider.callbackUrl,
+            }),
+          });
+          const tokens = await res.json();
+          if (tokens.error) {
+            console.error("[GitHub OAuth Token Exchange Error]", {
+              error: tokens.error,
+              description: tokens.error_description,
+              callbackUrl: provider.callbackUrl,
+            });
+            throw new Error(`GitHub OAuth error: ${tokens.error_description || tokens.error}`);
+          }
+          return { tokens };
+        },
+      },
       profile(profile) {
         return {
           id: String(profile.id),
@@ -62,9 +90,46 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+      }
+      if (account?.provider === "github" && account.access_token) {
+        token.accessToken = account.access_token;
+        const targetUserId = user?.id || (token.id as string);
+        if (targetUserId) {
+          try {
+            await db.account.upsert({
+              where: {
+                provider_providerAccountId: {
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                },
+              },
+              update: {
+                userId: targetUserId,
+                access_token: account.access_token,
+                token_type: account.token_type,
+                scope: account.scope,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+              },
+              create: {
+                userId: targetUserId,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                token_type: account.token_type,
+                scope: account.scope,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+              },
+            });
+          } catch (error) {
+            console.error("[auth] Failed to persist GitHub account tokens:", error);
+          }
+        }
       }
       return token;
     },

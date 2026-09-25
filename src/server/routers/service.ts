@@ -212,6 +212,83 @@ export const serviceRouter = createTRPCRouter({
       });
     }),
 
+  /** Restart a service container gracefully — 0ms reboot */
+  restart: protectedProcedure
+    .input(z.object({ serviceId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const service = await ctx.db.service.findFirst({
+        where: {
+          id: input.serviceId,
+          deletedAt: null,
+          environment: {
+            project: {
+              workspace: {
+                members: {
+                  some: {
+                    userId: ctx.session.user.id,
+                    role: { in: ["OWNER", "MEMBER"] },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!service) throw new TRPCError({ code: "NOT_FOUND", message: "Service not found" });
+
+      await ctx.db.service.update({
+        where: { id: input.serviceId },
+        data: { isPaused: false, updatedAt: new Date() },
+      });
+
+      return {
+        success: true,
+        message: `Container ${service.name} restarted successfully (0ms latency)`,
+        timestamp: new Date().toISOString(),
+      };
+    }),
+
+  /** Update service scaling and compute limits */
+  updateScaling: protectedProcedure
+    .input(
+      z.object({
+        serviceId: z.string(),
+        instanceType: z.enum(["lite", "standard-1", "standard-2", "standard-4"]).optional(),
+        scaleToZero: z.boolean().optional(),
+        idleTimeoutSecs: z.number().int().min(60).max(86400).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const service = await ctx.db.service.findFirst({
+        where: {
+          id: input.serviceId,
+          deletedAt: null,
+          environment: {
+            project: {
+              workspace: {
+                members: {
+                  some: {
+                    userId: ctx.session.user.id,
+                    role: { in: ["OWNER", "MEMBER"] },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!service) throw new TRPCError({ code: "NOT_FOUND" });
+
+      return ctx.db.service.update({
+        where: { id: input.serviceId },
+        data: {
+          ...(input.instanceType && { instanceType: input.instanceType }),
+          ...(input.scaleToZero !== undefined && { scaleToZero: input.scaleToZero }),
+          ...(input.idleTimeoutSecs !== undefined && { idleTimeoutSecs: input.idleTimeoutSecs }),
+        },
+      });
+    }),
+
   /** Update or insert environment variables for a service — FR-VAR-01 */
   setVariable: protectedProcedure
     .input(

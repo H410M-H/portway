@@ -28,6 +28,7 @@
     "@trpc/react-query": "^11.13.0",
     "@trpc/server": "^11.13.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/three": "^0.186.0",
     "bcryptjs": "^3.0.3",
     "next": "16.3.4",
     "next-auth": "^4.24.11",
@@ -36,6 +37,7 @@
     "react-dom": "19.2.8",
     "resend": "^6.28.1",
     "superjson": "^2.2.6",
+    "three": "^0.186.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {

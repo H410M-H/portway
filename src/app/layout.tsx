@@ -68,6 +68,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { GlobalSpaceBackground } from "@/components/ui/global-space-background";
+
 export default function RootLayout({
   children,
 }: {
@@ -76,7 +78,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <TRPCProvider>{children}</TRPCProvider>
+        <TRPCProvider>
+          <GlobalSpaceBackground />
+          {children}
+        </TRPCProvider>
       </body>
     </html>
   );

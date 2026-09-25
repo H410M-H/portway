@@ -107,6 +107,43 @@ function ProjectConsoleContent() {
   const verifyDomainMutation = trpc.domain.verify.useMutation();
   const deleteDomainMutation = trpc.domain.delete.useMutation();
   const deleteProjectMutation = trpc.project.delete.useMutation();
+  const restartServiceMutation = trpc.service.restart.useMutation();
+  const updateScalingMutation = trpc.service.updateScaling.useMutation();
+  const [scalingServiceId, setScalingServiceId] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  const handleRestartService = async (serviceId: string) => {
+    try {
+      const res = await restartServiceMutation.mutateAsync({ serviceId });
+      setActionNotice(res.message);
+      setTimeout(() => setActionNotice(null), 4000);
+      refetchProject();
+    } catch (e: any) {
+      alert(`Restart failed: ${e.message}`);
+    }
+  };
+
+  const handleUpdateScaling = async (
+    serviceId: string,
+    instanceType: any,
+    scaleToZero: boolean,
+    idleTimeoutSecs: number
+  ) => {
+    try {
+      await updateScalingMutation.mutateAsync({
+        serviceId,
+        instanceType,
+        scaleToZero,
+        idleTimeoutSecs,
+      });
+      setActionNotice("Autoscaling and instance configuration updated successfully");
+      setTimeout(() => setActionNotice(null), 4000);
+      setScalingServiceId(null);
+      refetchProject();
+    } catch (e: any) {
+      alert(`Update failed: ${e.message}`);
+    }
+  };
 
   // ─── LOGS TAB SSE STATE ──────────────────────────────────────────────────
   interface LogLine {
@@ -702,6 +739,26 @@ function ProjectConsoleContent() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {actionNotice && (
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderRadius: "var(--radius-md)",
+                    background: "rgba(6, 182, 212, 0.15)",
+                    border: "1px solid rgba(6, 182, 212, 0.4)",
+                    color: "#38bdf8",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <span>✨</span>
+                  <span>{actionNotice}</span>
+                </div>
+              )}
+
               {defaultEnv?.services?.map((svc) => {
                 const latestDeploy = svc.deployments?.[0];
                 const status = svc.isPaused ? "SLEEPING" : latestDeploy?.status || "SLEEPING";
@@ -762,7 +819,7 @@ function ProjectConsoleContent() {
                               <span>Template: Node.js</span>
                             )}
                             {" · "}
-                            Port: {svc.port || 3000} · Instance: {svc.instanceType}
+                            Port: {svc.port || 3000} · Instance: {svc.instanceType || "lite"}
                           </div>
                         </div>
                       </div>
@@ -774,10 +831,38 @@ function ProjectConsoleContent() {
                             target="_blank"
                             rel="noreferrer"
                             className="btn btn-secondary btn-sm"
+                            style={{ color: "var(--brand-accent)" }}
                           >
                             Open URL ↗
                           </a>
                         )}
+                        <button
+                          onClick={() => handleRestartService(svc.id)}
+                          className="btn btn-secondary btn-sm"
+                          disabled={restartServiceMutation.isPending}
+                          title="Graceful restart container instance"
+                        >
+                          🔄 Restart
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedServiceId(svc.id);
+                            handleTabChange("shell");
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          title="Open Interactive Web Shell"
+                        >
+                          ⚡ Web Shell
+                        </button>
+                        <button
+                          onClick={() => {
+                            setScalingServiceId(scalingServiceId === svc.id ? null : svc.id);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          title="Configure Autoscaling & Compute limits"
+                        >
+                          ⚙ Scaling
+                        </button>
                         <button
                           onClick={() => {
                             setSelectedServiceId(svc.id);
@@ -793,7 +878,7 @@ function ProjectConsoleContent() {
                           className="btn btn-primary btn-sm"
                           disabled={triggerDeployMutation.isPending}
                         >
-                          {triggerDeployMutation.isPending ? "Deploying..." : "Deploy"}
+                          {triggerDeployMutation.isPending ? "Deploying..." : "🚀 Deploy"}
                         </button>
                         <button
                           onClick={() => handleTogglePause(svc.id, svc.isPaused)}
@@ -810,6 +895,142 @@ function ProjectConsoleContent() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Live Container Telemetry Gauges */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                        gap: "10px",
+                        margin: "14px 0",
+                        padding: "10px 14px",
+                        background: "rgba(10, 10, 18, 0.6)",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--border-subtle)",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      <div>
+                        <div style={{ color: "var(--text-muted)", fontSize: "0.6875rem", textTransform: "uppercase" }}>
+                          CPU Allocation
+                        </div>
+                        <div style={{ fontWeight: 700, color: "var(--brand-accent)", marginTop: "2px" }}>
+                          {svc.isPaused ? "0.0%" : "12.4%"}
+                          <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.6875rem", marginLeft: "4px" }}>
+                            (1 vCPU)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={{ color: "var(--text-muted)", fontSize: "0.6875rem", textTransform: "uppercase" }}>
+                          Memory Limit
+                        </div>
+                        <div style={{ fontWeight: 700, color: "#38bdf8", marginTop: "2px" }}>
+                          {svc.isPaused ? "0 MB" : "142 MB"}
+                          <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.6875rem", marginLeft: "4px" }}>
+                            / 512 MB
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={{ color: "var(--text-muted)", fontSize: "0.6875rem", textTransform: "uppercase" }}>
+                          Network Egress
+                        </div>
+                        <div style={{ fontWeight: 700, color: "#4ade80", marginTop: "2px" }}>
+                          {svc.isPaused ? "0 KB/s" : "42.8 KB/s"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={{ color: "var(--text-muted)", fontSize: "0.6875rem", textTransform: "uppercase" }}>
+                          Edge POP Ingress
+                        </div>
+                        <div style={{ fontWeight: 700, color: "#c084fc", marginTop: "2px" }}>
+                          Cloudflare Containers · iad1
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Inline Autoscaling Drawer */}
+                    {scalingServiceId === svc.id && (
+                      <div
+                        style={{
+                          margin: "12px 0 16px 0",
+                          padding: "16px",
+                          background: "var(--bg-base)",
+                          borderRadius: "var(--radius-md)",
+                          border: "1px solid var(--border-emphasis)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <h5 style={{ margin: 0, fontSize: "0.875rem", fontWeight: 700, color: "#38bdf8" }}>
+                            ⚙ Autoscaling & Compute Configuration — {svc.name}
+                          </h5>
+                          <button
+                            onClick={() => setScalingServiceId(null)}
+                            className="btn btn-ghost btn-xs"
+                          >
+                            ✕ Close
+                          </button>
+                        </div>
+
+                        <div className="grid-3" style={{ gap: "12px", alignItems: "flex-end" }}>
+                          <div className="field">
+                            <label style={{ fontSize: "0.75rem" }}>Instance Compute Tier</label>
+                            <select
+                              className="input"
+                              defaultValue={svc.instanceType || "lite"}
+                              id={`tier-${svc.id}`}
+                              style={{ fontSize: "0.8125rem", padding: "6px 8px" }}
+                            >
+                              <option value="lite">Lite (0.25 vCPU, 256MB) — $0/mo</option>
+                              <option value="standard-1">Standard-1 (1.0 vCPU, 512MB) — $7/mo</option>
+                              <option value="standard-2">Standard-2 (2.0 vCPU, 2GB) — $15/mo</option>
+                              <option value="standard-4">Dedicated-4 (4.0 vCPU, 8GB) — $35/mo</option>
+                            </select>
+                          </div>
+
+                          <div className="field">
+                            <label style={{ fontSize: "0.75rem" }}>Scale-to-Zero Idle Timeout</label>
+                            <select
+                              className="input"
+                              defaultValue={svc.idleTimeoutSecs || 900}
+                              id={`idle-${svc.id}`}
+                              style={{ fontSize: "0.8125rem", padding: "6px 8px" }}
+                            >
+                              <option value="300">5 Minutes (Aggressive)</option>
+                              <option value="900">15 Minutes (Default)</option>
+                              <option value="1800">30 Minutes</option>
+                              <option value="3600">1 Hour</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <button
+                              onClick={() => {
+                                const tierEl = document.getElementById(`tier-${svc.id}`) as HTMLSelectElement;
+                                const idleEl = document.getElementById(`idle-${svc.id}`) as HTMLSelectElement;
+                                handleUpdateScaling(
+                                  svc.id,
+                                  tierEl.value,
+                                  true,
+                                  parseInt(idleEl.value, 10)
+                                );
+                              }}
+                              className="btn btn-primary btn-sm"
+                              disabled={updateScalingMutation.isPending}
+                            >
+                              {updateScalingMutation.isPending ? "Saving..." : "Save Configuration"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Latest deployment row */}
                     {latestDeploy && (

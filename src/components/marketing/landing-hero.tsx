@@ -4,22 +4,22 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 const TERMINAL_LOGS = [
-  { text: "$ syncbay up --project cloud-edge", color: "#e2e8f0", delay: 0 },
-  { text: "⚡ Analyzing repository structure...", color: "#06B6D4", delay: 400 },
-  { text: "✔ Detected: Node.js 20 (Next.js 16 App Router)", color: "#22c55e", delay: 900 },
-  { text: "✔ Attached Managed Postgres: ${{ Postgres.URL }}", color: "#22c55e", delay: 1400 },
-  { text: "🚀 Ephemeral build container active (0ms cold start)", color: "#06B6D4", delay: 1900 },
-  { text: "✔ Image pushed: registry.syncbay.edge/cloud-edge:v1", color: "#22c55e", delay: 2400 },
-  { text: "🌍 Routing to 6 POPs: [iad1, sfo1, fra1, lhr1, sin1, syd1]", color: "#a78bfa", delay: 2900 },
-  { text: "✔ Healthcheck passed (200 OK, 12ms)", color: "#22c55e", delay: 3400 },
-  { text: "✨ Live → https://cloud-edge.syncbay.app", color: "#fbbf24", delay: 3900 },
+  { text: "$ syncbay up --project cloud-edge", color: "#f8fafc", delay: 0 },
+  { text: "⚡ Analyzing repository structure & runtime...", color: "#38bdf8", delay: 350 },
+  { text: "✔ Detected: Node.js 20 (Next.js 16 App Router)", color: "#4ade80", delay: 800 },
+  { text: "✔ Attached Managed Postgres: ${{ Postgres.URL }}", color: "#4ade80", delay: 1300 },
+  { text: "🚀 Ephemeral build container active (0ms cold start)", color: "#38bdf8", delay: 1750 },
+  { text: "✔ Image pushed: registry.syncbay.edge/cloud-edge:v1", color: "#4ade80", delay: 2200 },
+  { text: "🌍 Routing to 6 POPs: [iad1, sfo1, fra1, lhr1, sin1, syd1]", color: "#c084fc", delay: 2650 },
+  { text: "✔ Healthcheck passed (200 OK, 12ms)", color: "#4ade80", delay: 3100 },
+  { text: "✨ Live at https://cloud-edge.syncbay.app", color: "#facc15", delay: 3500 },
 ];
 
 const STATS = [
-  { label: "Global Edge POPs", value: "6", suffix: "regions" },
-  { label: "Cold Start Time", value: "0", suffix: "ms" },
-  { label: "Deploy Speed", value: "<30", suffix: "seconds" },
-  { label: "Uptime SLA", value: "99.99", suffix: "%" },
+  { label: "Global Edge POPs", value: "6", suffix: "regions", color: "#38bdf8" },
+  { label: "Cold Start Time", value: "0", suffix: "ms", color: "#4ade80" },
+  { label: "Deploy Speed", value: "<30", suffix: "sec", color: "#c084fc" },
+  { label: "Uptime SLA", value: "99.99", suffix: "%", color: "#facc15" },
 ];
 
 export function LandingHero() {
@@ -29,7 +29,7 @@ export function LandingHero() {
 
   useEffect(() => {
     const timers = TERMINAL_LOGS.map((log, i) =>
-      setTimeout(() => setVisibleLogs(i + 1), log.delay + 500)
+      setTimeout(() => setVisibleLogs(i + 1), log.delay + 300)
     );
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -41,90 +41,101 @@ export function LandingHero() {
   };
 
   return (
-    <section className="relative z-10 pt-20 sm:pt-28 pb-20 px-4 max-w-7xl mx-auto">
-      {/* Badge */}
+    <section className="relative z-10 pt-16 sm:pt-24 pb-16 px-4 max-w-7xl mx-auto">
+      {/* 3D Glowing Version Pill */}
       <div className="flex justify-center mb-8">
         <div
-          className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full text-xs font-semibold tracking-wide"
+          className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase transition-all duration-300 hover:scale-105"
           style={{
-            background: "linear-gradient(135deg, rgba(6,182,212,0.1), rgba(124,58,237,0.1))",
-            border: "1px solid rgba(6,182,212,0.2)",
+            background: "linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(124,58,237,0.2) 100%)",
+            border: "1px solid rgba(6,182,212,0.5)",
             color: "#67e8f9",
+            boxShadow: "0 0 25px rgba(6,182,212,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+            backdropFilter: "blur(12px)",
           }}
         >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-80" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
           </span>
-          SYNCBAY CLOUD HYPER-PLANE v2.0 — Now Live
+          SYNCBAY CLOUD HYPER-PLANE 2.0 — Live Global Edge
         </div>
       </div>
 
-      {/* Headline */}
+      {/* Main 4K Title with 3D Depth */}
       <h1
         className="text-center text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] mb-6"
-        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+        style={{
+          fontFamily: "'Inter', system-ui, sans-serif",
+          textShadow: "0 10px 40px rgba(0,0,0,0.8)",
+        }}
       >
-        <span className="text-white">Deploy in Seconds.</span>
+        <span className="text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.2)]">
+          Deploy in Seconds.
+        </span>
         <br />
         <span
           style={{
-            background: "linear-gradient(135deg, #06B6D4 0%, #7C3AED 40%, #EC4899 70%, #F59E0B 100%)",
+            background: "linear-gradient(135deg, #38bdf8 0%, #818cf8 35%, #c084fc 70%, #f472b6 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
+            filter: "drop-shadow(0 0 35px rgba(56,189,248,0.35))",
           }}
         >
           Scale Without Limits.
         </span>
       </h1>
 
-      {/* Subtitle */}
-      <p className="text-center text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-12 leading-relaxed" style={{ color: "#94a3b8" }}>
-        The next-generation PaaS that outperforms Vercel and Railway. Deploy any codebase to 6 global
-        edge POPs with zero cold starts, managed PostgreSQL, interactive Web Shell, and built-in SQL Studio.
+      {/* High-Readability Subtitle */}
+      <p
+        className="text-center text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-12 leading-relaxed"
+        style={{ color: "#cbd5e1", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}
+      >
+        The next-generation developer PaaS engineered to surpass Vercel and Railway. Deploy any codebase to 6 global
+        edge POPs with zero cold starts, attached managed PostgreSQL, interactive Web Shell, and real-time SQL Studio.
       </p>
 
-      {/* CTA Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-        <Link
-          href="/auth/signin"
-          className="group relative w-full sm:w-auto"
-        >
+      {/* CTA Buttons with 3D Bevels */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-16">
+        <Link href="/auth/signin" className="group relative w-full sm:w-auto">
           <div
-            className="absolute -inset-0.5 rounded-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-300 blur-sm"
-            style={{ background: "linear-gradient(135deg, #06B6D4, #7C3AED, #EC4899)" }}
+            className="absolute -inset-1 rounded-2xl opacity-80 group-hover:opacity-100 transition-opacity duration-300 blur-md"
+            style={{ background: "linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899)" }}
           />
           <div
-            className="relative px-8 py-4 rounded-xl font-extrabold text-sm text-center transition-all"
+            className="relative px-8 py-4 rounded-xl font-black text-sm text-center transition-transform duration-200 group-hover:scale-[1.02]"
             style={{
-              background: "linear-gradient(135deg, #06B6D4, #3B82F6)",
-              color: "#000",
+              background: "linear-gradient(135deg, #06b6d4 0%, #38bdf8 100%)",
+              color: "#050510",
+              boxShadow: "0 10px 25px rgba(6,182,212,0.4), inset 0 1px 0 rgba(255,255,255,0.4)",
             }}
           >
-            🚀 Start Deploying Free — 30 Seconds
+            🚀 Launch Free Project — 30 Seconds
           </div>
         </Link>
 
+        {/* CLI Command Pill with 4K Metallic Border */}
         <div
           className="flex items-center gap-3 px-5 py-3.5 rounded-xl text-xs font-mono"
           style={{
-            background: "rgba(15,15,25,0.8)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(12px)",
-            color: "#94a3b8",
+            background: "rgba(18, 18, 30, 0.85)",
+            border: "1px solid rgba(6, 182, 212, 0.35)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)",
+            backdropFilter: "blur(14px)",
+            color: "#e2e8f0",
           }}
         >
-          <span style={{ color: "#4b5563" }}>$</span>
-          <code style={{ color: "#e2e8f0" }}>npm i -g syncbay && syncbay up</code>
+          <span style={{ color: "#38bdf8", fontWeight: 700 }}>$</span>
+          <code style={{ color: "#f8fafc", fontWeight: 600 }}>npm i -g syncbay && syncbay up</code>
           <button
             type="button"
             onClick={copyCmd}
-            className="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all"
+            className="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all hover:scale-105"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              color: copied ? "#22c55e" : "#94a3b8",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: copied ? "rgba(34, 197, 94, 0.2)" : "rgba(6, 182, 212, 0.15)",
+              color: copied ? "#4ade80" : "#38bdf8",
+              border: copied ? "1px solid #4ade80" : "1px solid rgba(6, 182, 212, 0.4)",
             }}
           >
             {copied ? "Copied!" : "Copy"}
@@ -132,66 +143,91 @@ export function LandingHero() {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-16">
+      {/* 3D Realistic Metallic Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-16">
         {STATS.map((stat) => (
           <div
             key={stat.label}
-            className="text-center p-4 rounded-2xl"
+            className="text-center p-5 rounded-2xl transition-all duration-300 hover:scale-105"
             style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              backdropFilter: "blur(8px)",
+              background: "linear-gradient(135deg, rgba(24, 24, 38, 0.85) 0%, rgba(12, 12, 22, 0.95) 100%)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              boxShadow: "0 12px 30px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(6, 182, 212, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+              backdropFilter: "blur(12px)",
             }}
           >
-            <div className="text-3xl sm:text-4xl font-black" style={{ color: "#06B6D4" }}>
+            <div
+              className="text-4xl sm:text-5xl font-black tracking-tight"
+              style={{
+                color: stat.color,
+                textShadow: `0 0 20px ${stat.color}66`,
+              }}
+            >
               {stat.value}
-              <span className="text-sm font-medium ml-1" style={{ color: "#6b7280" }}>
+              <span className="text-sm font-semibold ml-1.5" style={{ color: "#94a3b8" }}>
                 {stat.suffix}
               </span>
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div
+              className="text-xs font-bold mt-2 tracking-wider uppercase"
+              style={{ color: "#cbd5e1" }}
+            >
               {stat.label}
             </div>
           </div>
         ))}
       </div>
 
-      {/* 3D Terminal */}
-      <div className="max-w-4xl mx-auto" style={{ perspective: "1200px" }}>
+      {/* 3D Realistic Floating Cyber Terminal */}
+      <div className="max-w-4xl mx-auto" style={{ perspective: "1400px" }}>
         <div
-          className="rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden transition-all duration-500 hover:scale-[1.01]"
           style={{
-            transform: "rotateX(4deg)",
+            transform: "rotateX(3deg)",
             transformStyle: "preserve-3d",
-            background: "rgba(8, 8, 18, 0.9)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 25px 60px -12px rgba(0,0,0,0.8), 0 0 40px rgba(6,182,212,0.08), inset 0 1px 0 rgba(255,255,255,0.05)",
+            background: "linear-gradient(180deg, rgba(16, 16, 26, 0.96) 0%, rgba(8, 8, 14, 0.98) 100%)",
+            border: "1px solid rgba(6, 182, 212, 0.4)",
+            boxShadow:
+              "0 30px 80px -15px rgba(0,0,0,0.9), 0 0 45px rgba(6,182,212,0.18), inset 0 1px 1px rgba(255,255,255,0.2)",
+            backdropFilter: "blur(20px)",
           }}
         >
           {/* Terminal Header */}
           <div
-            className="flex items-center justify-between px-5 py-3"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
+            className="flex items-center justify-between px-6 py-3.5"
+            style={{
+              borderBottom: "1px solid rgba(6, 182, 212, 0.2)",
+              background: "rgba(255, 255, 255, 0.03)",
+            }}
           >
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ background: "#ef4444" }} />
-              <div className="w-3 h-3 rounded-full" style={{ background: "#f59e0b" }} />
-              <div className="w-3 h-3 rounded-full" style={{ background: "#22c55e" }} />
-              <span className="ml-3 text-[11px] font-semibold font-mono" style={{ color: "#6b7280" }}>
-                syncbay-cli — deployment
+            <div className="flex items-center gap-2.5">
+              <div className="w-3.5 h-3.5 rounded-full shadow-[0_0_8px_#ef4444]" style={{ background: "#ef4444" }} />
+              <div className="w-3.5 h-3.5 rounded-full shadow-[0_0_8px_#f59e0b]" style={{ background: "#f59e0b" }} />
+              <div className="w-3.5 h-3.5 rounded-full shadow-[0_0_8px_#22c55e]" style={{ background: "#22c55e" }} />
+              <span
+                className="ml-3 text-xs font-bold font-mono tracking-wide"
+                style={{ color: "#94a3b8" }}
+              >
+                syncbay-engine@edge-us-east · OCI Container Fabric
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "#4b5563" }}>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                6 Edge POPs Online
+            <div className="flex items-center gap-3 text-xs font-mono">
+              <span
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-bold"
+                style={{
+                  background: "rgba(34, 197, 94, 0.15)",
+                  color: "#4ade80",
+                  border: "1px solid rgba(34, 197, 94, 0.3)",
+                }}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#4ade80] animate-pulse" />
+                6 POPs Synchronized
               </span>
             </div>
           </div>
 
           {/* Terminal Body */}
-          <div ref={terminalRef} className="p-6 font-mono text-[13px] space-y-1.5 min-h-[280px]">
+          <div ref={terminalRef} className="p-7 font-mono text-[13.5px] space-y-2 min-h-[300px]">
             {TERMINAL_LOGS.slice(0, visibleLogs).map((log, idx) => (
               <div
                 key={idx}
@@ -199,31 +235,32 @@ export function LandingHero() {
                 style={{
                   color: log.color,
                   animation: "fadeSlideIn 0.3s ease-out forwards",
-                  fontWeight: idx === TERMINAL_LOGS.length - 1 ? 700 : 400,
+                  fontWeight: idx === TERMINAL_LOGS.length - 1 ? 700 : 500,
+                  textShadow: idx === TERMINAL_LOGS.length - 1 ? "0 0 10px rgba(250,204,21,0.4)" : "none",
                 }}
               >
                 {log.text}
               </div>
             ))}
             {visibleLogs >= TERMINAL_LOGS.length && (
-              <div className="flex items-center pt-3" style={{ color: "#4b5563" }}>
+              <div className="flex items-center pt-3 font-semibold" style={{ color: "#38bdf8" }}>
                 <span
-                  className="inline-block w-2 h-5 mr-2"
-                  style={{ background: "#06B6D4", animation: "blink 1s step-end infinite" }}
+                  className="inline-block w-2.5 h-5 mr-2.5"
+                  style={{ background: "#38bdf8", animation: "blink 1s step-end infinite", boxShadow: "0 0 10px #38bdf8" }}
                 />
-                Ready for production traffic across all POPs...
+                Active edge ingress listening on port 443 with TLS 1.3 & HTTP/3 QUIC...
               </div>
             )}
           </div>
         </div>
 
-        {/* Terminal reflection */}
+        {/* 3D Specular Reflection Floor */}
         <div
-          className="h-16 rounded-b-2xl mx-4"
+          className="h-20 rounded-b-3xl mx-6"
           style={{
-            background: "linear-gradient(to bottom, rgba(6,182,212,0.04), transparent)",
-            filter: "blur(8px)",
-            transform: "scaleY(-0.3) translateY(-20px)",
+            background: "linear-gradient(to bottom, rgba(6,182,212,0.12), transparent)",
+            filter: "blur(12px)",
+            transform: "scaleY(-0.4) translateY(-25px)",
           }}
         />
       </div>

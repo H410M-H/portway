@@ -7,8 +7,22 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/auth/signin", "/api/v1/openapi.json", "/api/geo/locate"],
-        disallow: ["/dashboard/", "/api/deployments/", "/api/trpc/"],
+        allow: [
+          "/",
+          "/pricing",
+          "/enterprise",
+          "/templates",
+          "/roadmap",
+          "/auth/signin",
+          "/api/v1/openapi.json",
+          "/api/geo/locate",
+        ],
+        disallow: [
+          "/dashboard/",
+          "/api/deployments/",
+          "/api/trpc/",
+          "/invite/",
+        ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

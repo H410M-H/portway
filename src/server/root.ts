@@ -14,6 +14,7 @@ import { edgeRouter } from "@/server/routers/edge";
 import { shellRouter } from "@/server/routers/shell";
 import { queryStudioRouter } from "@/server/routers/query-studio";
 import { devopsRouter } from "@/server/routers/devops";
+import { rdRouter } from "@/server/routers/rd";
 
 /**
  * Root tRPC router — all sub-routers are merged here.
@@ -35,6 +36,7 @@ export const appRouter = createTRPCRouter({
   shell: shellRouter,
   queryStudio: queryStudioRouter,
   devops: devopsRouter,
+  rd: rdRouter,
 });
 
 export type AppRouter = typeof appRouter;

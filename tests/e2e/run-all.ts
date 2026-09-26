@@ -28,6 +28,7 @@ import "./tier4.test";
 import "./tier5-next-modules.test";
 import "./tier6-devops-pricing-rbac.test";
 import "./tier-enterprise.test";
+import "./tier7-all-modules-seo-geo-crons-rd.test";
 
 // Parse CLI arguments
 const args = process.argv.slice(2);
@@ -44,6 +45,7 @@ const TIER_TITLES: Record<number, string> = {
   4: "Tier 4 — Real-World Application Scenarios (Enterprise Onboarding, Rollback & DevOps)",
   5: "Tier 5 — Next Modules up to M7 (M5 Edge, M6 CLI/OpenAPI, M7 Shell/Studio, GEO & SEO)",
   6: "Tier 6 — DevOps Hyper-Plane, WAF, Crons, Canary, RBAC, Plans & US Compliance",
+  7: "Tier 7 — Sub-Services & Modules, SEO/GEO Ranking, Smart Crons & Weekly R&D Strategy",
 };
 
 async function runSuite() {

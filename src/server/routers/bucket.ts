@@ -10,23 +10,37 @@ import { storageProvider } from "@/lib/storage-provider";
 
 export const bucketRouter = createTRPCRouter({
   /**
-   * List all storage buckets in a project
+   * List all storage buckets in a project or workspace
    */
   list: protectedProcedure
-    .input(z.object({ projectId: z.string() }))
+    .input(
+      z
+        .object({
+          projectId: z.string().optional(),
+          workspaceId: z.string().optional(),
+        })
+        .optional()
+    )
     .query(async ({ ctx, input }) => {
-      const project = await ctx.db.project.findFirst({
-        where: {
-          id: input.projectId,
+      const where: any = {
+        project: {
           deletedAt: null,
           workspace: { members: { some: { userId: ctx.session.user.id } } },
         },
-      });
+      };
 
-      if (!project) throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
+      if (input?.projectId) {
+        where.projectId = input.projectId;
+      }
+      if (input?.workspaceId) {
+        where.project.workspaceId = input.workspaceId;
+      }
 
       const buckets = await ctx.db.bucket.findMany({
-        where: { projectId: input.projectId },
+        where,
+        include: {
+          project: true,
+        },
         orderBy: { createdAt: "desc" },
       });
 

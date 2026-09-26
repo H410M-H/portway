@@ -226,31 +226,50 @@ export function routeClientRequest(params: {
   latitude?: number;
   longitude?: number;
 }): RoutingDecision {
-  const coords =
-    params.latitude !== undefined && params.longitude !== undefined
-      ? { lat: params.latitude, lon: params.longitude }
-      : getCoordinatesForCountry(params.country);
+  let coords: { lat: number; lon: number };
+  if (
+    params.latitude !== undefined &&
+    params.longitude !== undefined &&
+    typeof params.latitude === "number" &&
+    typeof params.longitude === "number" &&
+    !isNaN(params.latitude) &&
+    !isNaN(params.longitude)
+  ) {
+    const lat = Math.max(-90, Math.min(90, params.latitude));
+    const lon = Math.max(-180, Math.min(180, params.longitude));
+    coords = { lat, lon };
+  } else {
+    coords = getCoordinatesForCountry(params.country);
+  }
 
   const allRegions = getEdgeRegions();
 
   // Rank regions by physical distance
-  const sorted = [...allRegions].map((reg) => {
-    const dist = calculateDistanceKm(coords.lat, coords.lon, reg.latitude, reg.longitude);
-    return { region: reg, distance: dist };
-  }).sort((a, b) => a.distance - b.distance);
+  const sorted = [...allRegions]
+    .map((reg) => {
+      const dist = calculateDistanceKm(coords.lat, coords.lon, reg.latitude, reg.longitude);
+      return { region: reg, distance: dist };
+    })
+    .sort((a, b) => a.distance - b.distance);
 
   const primaryCandidate = sorted[0].region;
   let activeCandidate = primaryCandidate;
   let isFailover = false;
   let failoverReason: string | undefined = undefined;
 
-  // If primary is down, failover to next closest healthy region
+  // If primary is down, failover cascade: HEALTHY first, then DEGRADED
   if (primaryCandidate.status === "OUTAGE") {
-    const fallback = sorted.find((s) => s.region.status === "HEALTHY");
-    if (fallback) {
+    const healthyFallback = sorted.find((s) => s.region.status === "HEALTHY");
+    const degradedFallback = sorted.find((s) => s.region.status === "DEGRADED");
+    const fallback = healthyFallback || degradedFallback;
+    if (fallback && fallback.region.id !== primaryCandidate.id) {
       activeCandidate = fallback.region;
       isFailover = true;
-      failoverReason = `Primary POP ${primaryCandidate.id.toUpperCase()} is undergoing an outage. Traffic automatically rerouted to nearest healthy edge node ${fallback.region.id.toUpperCase()}.`;
+      const statusNote = fallback.region.status === "HEALTHY" ? "healthy" : "degraded (active standby)";
+      failoverReason = `Primary POP ${primaryCandidate.id.toUpperCase()} is undergoing an outage. Traffic automatically rerouted to nearest ${statusNote} edge node ${fallback.region.id.toUpperCase()}.`;
+    } else {
+      isFailover = true;
+      failoverReason = `All edge POPs are experiencing severe degradation or outage. Routing to nearest available POP ${primaryCandidate.id.toUpperCase()}.`;
     }
   }
 

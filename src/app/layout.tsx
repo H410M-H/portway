@@ -70,6 +70,60 @@ export const metadata: Metadata = {
 
 import { GlobalSpaceBackground } from "@/components/ui/global-space-background";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.syncbay.app/#organization",
+      "name": "Syncbay Technologies Inc.",
+      "url": "https://www.syncbay.app",
+      "logo": "https://www.syncbay.app/favicon.ico",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "548 Market St, Suite 82194",
+        "addressLocality": "San Francisco",
+        "addressRegion": "CA",
+        "postalCode": "94104",
+        "addressCountry": "US"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://www.syncbay.app/#application",
+      "name": "Syncbay PaaS",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Cloud / Linux",
+      "description": "Next-Gen developer PaaS with 6 global edge POPs, 0ms cold starts, attached managed PostgreSQL, interactive Web Shell, and SQL Query Studio.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "name": "Hobby Plan"
+        },
+        {
+          "@type": "Offer",
+          "price": "12",
+          "priceCurrency": "USD",
+          "name": "Pro Plan"
+        },
+        {
+          "@type": "Offer",
+          "price": "450",
+          "priceCurrency": "USD",
+          "name": "Enterprise Plan"
+        }
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "1420"
+      }
+    }
+  ]
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -77,6 +131,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body>
         <TRPCProvider>
           <GlobalSpaceBackground />

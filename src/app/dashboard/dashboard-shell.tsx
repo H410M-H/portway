@@ -253,7 +253,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         role: inviteRole,
         expiresInDays: inviteDays,
       });
-      const link = `${typeof window !== "undefined" ? window.location.origin : ""}/invite?token=${res.token}`;
+      const link = `${typeof window !== "undefined" ? window.location.origin : ""}/invite/${res.token}`;
       setInviteResult({ token: res.token, link });
       setInviteEmail("");
     } catch (err: any) {
@@ -736,6 +736,38 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
             <span className="sidebar-label-text">Projects</span>
             {isCollapsed && <span className="sidebar-tooltip">Projects</span>}
           </Link>
+          <Link
+            href="/dashboard/services"
+            className={`nav-item ${isNavActive("/dashboard/services") ? "active" : ""}`}
+          >
+            <span className="nav-icon">⚡</span>
+            <span className="sidebar-label-text">Services</span>
+            {isCollapsed && <span className="sidebar-tooltip">Services</span>}
+          </Link>
+          <Link
+            href="/dashboard/databases"
+            className={`nav-item ${isNavActive("/dashboard/databases") ? "active" : ""}`}
+          >
+            <span className="nav-icon">🐘</span>
+            <span className="sidebar-label-text">Databases</span>
+            {isCollapsed && <span className="sidebar-tooltip">Databases</span>}
+          </Link>
+          <Link
+            href="/dashboard/buckets"
+            className={`nav-item ${isNavActive("/dashboard/buckets") ? "active" : ""}`}
+          >
+            <span className="nav-icon">🪣</span>
+            <span className="sidebar-label-text">Buckets</span>
+            {isCollapsed && <span className="sidebar-tooltip">Buckets</span>}
+          </Link>
+          <Link
+            href="/dashboard/crons"
+            className={`nav-item ${isNavActive("/dashboard/crons") ? "active" : ""}`}
+          >
+            <span className="nav-icon">⏱️</span>
+            <span className="sidebar-label-text">Smart Crons</span>
+            {isCollapsed && <span className="sidebar-tooltip">Smart Crons</span>}
+          </Link>
 
           <span className="nav-section-label" style={{ marginTop: "12px" }}>
             Workspace
@@ -902,6 +934,18 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
           </Link>
           <Link href="/dashboard/projects" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">◫</span> Projects
+          </Link>
+          <Link href="/dashboard/services" className="nav-item" onClick={() => setMobileOpen(false)}>
+            <span className="nav-icon">⚡</span> Services
+          </Link>
+          <Link href="/dashboard/databases" className="nav-item" onClick={() => setMobileOpen(false)}>
+            <span className="nav-icon">🐘</span> Databases
+          </Link>
+          <Link href="/dashboard/buckets" className="nav-item" onClick={() => setMobileOpen(false)}>
+            <span className="nav-icon">🪣</span> Buckets
+          </Link>
+          <Link href="/dashboard/crons" className="nav-item" onClick={() => setMobileOpen(false)}>
+            <span className="nav-icon">⏱️</span> Smart Crons
           </Link>
           <Link href="/dashboard/shell" className="nav-item" onClick={() => setMobileOpen(false)}>
             <span className="nav-icon">💻</span> Web Shell

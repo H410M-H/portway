@@ -6,23 +6,43 @@ import { domainService } from "@/lib/domain-service";
 export const serviceRouter = createTRPCRouter({
   /** List services in an environment */
   list: protectedProcedure
-    .input(z.object({ environmentId: z.string() }))
+    .input(
+      z
+        .object({
+          environmentId: z.string().optional(),
+          workspaceId: z.string().optional(),
+        })
+        .optional()
+    )
     .query(async ({ ctx, input }) => {
-      return ctx.db.service.findMany({
-        where: {
-          environmentId: input.environmentId,
-          deletedAt: null,
-          environment: {
-            project: {
-              deletedAt: null,
-              workspace: { members: { some: { userId: ctx.session.user.id } } },
-            },
+      const where: any = {
+        deletedAt: null,
+        environment: {
+          project: {
+            deletedAt: null,
+            workspace: { members: { some: { userId: ctx.session.user.id } } },
           },
         },
+      };
+
+      if (input?.environmentId) {
+        where.environmentId = input.environmentId;
+      }
+      if (input?.workspaceId) {
+        where.environment.project.workspaceId = input.workspaceId;
+      }
+
+      return ctx.db.service.findMany({
+        where,
         include: {
           domains: true,
           variables: true,
           volumes: true,
+          environment: {
+            include: {
+              project: true,
+            },
+          },
           deployments: {
             orderBy: { createdAt: "desc" },
             take: 1,

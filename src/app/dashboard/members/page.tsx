@@ -106,7 +106,7 @@ export default function MembersPage() {
   };
 
   const copyInviteLink = (token: string, inviteId: string) => {
-    const link = `${window.location.origin}/invite?token=${token}`;
+    const link = `${window.location.origin}/invite/${token}`;
     navigator.clipboard.writeText(link);
     setCopiedInviteId(inviteId);
     setTimeout(() => setCopiedInviteId(null), 2500);
